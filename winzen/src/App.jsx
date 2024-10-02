@@ -1,151 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import { BsArrowLeftShort, BsBox2Fill, BsSearch, BsChevronDown, BsCartCheckFill, BsCartFill, BsCartPlusFill } from "react-icons/bs";
-import { GiThreeLeaves } from "react-icons/gi";
-import { RiDashboardFill } from "react-icons/ri";
-import { BiSolidCategory } from "react-icons/bi";
-import { IoMdAnalytics } from "react-icons/io";
-import { FaHistory, FaUsers, FaUserPlus } from "react-icons/fa";
-import { AiOutlineLogout } from "react-icons/ai";
-import { MdAddBox } from "react-icons/md";
-import { NavLink, Route, Routes, useLocation } from "react-router-dom";
-import Loader from 'react-js-loader' 
+import { FaEnvelope, FaLock } from 'react-icons/fa';
+import bgImage from '../src/assets/images/winzenbg.png';
+import { db, ref, get, child } from "../firebaseConfig";
+import Sidebar from './Sidebar';
+import ReCAPTCHA from 'react-google-recaptcha'; 
 
 const App = () => {
-  const [open, setOpen] = useState(false);
-  const [openSubmenu, setOpenSubmenu] = useState({});
-  const location = useLocation(); 
-  const [loading, setLoading] = useState(true);
+  const [staffId, setStaffId] = useState("");
+  const [password, setPassword] = useState(""); 
+  const [error, setError] = useState(""); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [captchaValue, setCaptchaValue] = useState(null);
+
+  const checkLoginStatus = () => {
+    const loggedInUser = localStorage.getItem("isLoggedIn");
+    setIsLoggedIn(loggedInUser === "true");
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 5000);
-
-    return () => clearTimeout(timer);
+    checkLoginStatus(); 
   }, []);
 
-  const Menus = [
-    { title: "Dashboard", path: "/", icon: <RiDashboardFill /> },
-    { title: "Order", path: "/orders", icon: <BsCartCheckFill /> },
-    { title: "Manage Categories", path: "/manage-categories", icon: <BiSolidCategory /> },
-    { title: "Add Categories", path: "/add-categories", icon: <MdAddBox /> },
-    { title: "Manage Products", path: "/manage-products", icon: <BsCartFill /> },
-    { title: "Add Products", path: "/add-products", icon: <BsCartPlusFill /> },
-    {
-      title: "Stocks",
-      spacing: true,
-      submenu: true,
-      path: "/stocks",
-      icon: <BsBox2Fill />,
-      submenuItems: [
-        { title: "Submenu 1", path: "/submenu1" }, 
-        { title: "Submenu 2", path: "/submenu2" }, 
-        { title: "Submenu 3", path: "/submenu3" },
-        { title: "Submenu 4", path: "/submenu4" },
-      ],
-    },
-    { title: "Transactions", path: "/transactions", spacing: true, icon: <FaHistory /> },
-    { title: "Sales Report", path: "/sales-report", icon: <IoMdAnalytics /> },
-    { title: "Manage Users", path: "/manage-users", spacing: true, icon: <FaUsers /> },
-    { title: "Add Users", path: "/add-users", icon: <FaUserPlus /> },
-    { title: "Logout", path: "/logout", spacing: true, icon: <AiOutlineLogout /> },
-  ];
+  useEffect(() => {
+    const handleStorageChange = () => {
+      checkLoginStatus();
+    };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col justify-center text-center items-center h-screen bg-main-green">
-        <Loader type="heart" bgColor={"#BF8936"} color={"#BF8936"} size={300} />
-        <h2 className="text-darkest-honey text-2xl mt-12 align-middl font-bold">Please Wait a Moment</h2> {/* Adjust the text here */}
-      </div>
-    );
-  }
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [isLoggedIn]); 
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
   
+    if (!captchaValue) {
+      setError("Please complete the CAPTCHA.");
+      return;
+    }
+  
+    try {
+      const dbRef = ref(db); 
+      const snapshot = await get(child(dbRef, "staffs")); 
+  
+      if (snapshot.exists()) {
+        const staffs = snapshot.val();
+        const staff = staffs[staffId]; 
+  
+        if (staff) {
+          if (staff.Password === password) {
+            alert(`Welcome back, ${staff.Name}!`);
+            setIsLoggedIn(true);
+            
+            // Save the role and staff ID to local storage
+            const userData = {
+              staffId: staffId,
+              role: staff.Role,
+              email: staff.Email,
+              name: staff.Name,
+              phone: staff.Phone,
+              age: staff.Age,
+              imageUrl: staff.ImageUrl,
+              password: staff.Password,
+            };
+            localStorage.setItem("userData", JSON.stringify(userData));
 
+            localStorage.setItem("isLoggedIn", "true");
+            checkLoginStatus();
+            console.log("userData", userData)
+  
+            navigate("/home");
+          } else {
+            setError("Invalid Password. Please try again.");
+          }
+        } else {
+          setError("Invalid Staff ID. Please try again.");
+        }
+      } else {
+        setError("No staff data found. Please contact the administrator.");
+      }
+    } catch (error) {
+      setError("Error fetching staff data. Please try again later.");
+    }
+  };  
 
   return (
-    <div className='flex'>
-      {/* Sidebar */}
-      <div className={`bg-main-green h-full p-5 pt-8 ${open ? 'w-72' : 'w-20'} duration-300 relative`}>
-        <BsArrowLeftShort className={`bg-white text-main-green text-3xl rounded-full absolute -right-3 
-        top-9 border border-main-green cursor-pointer ${!open && 'rotate-180'}`} onClick={() => setOpen(!open)} />
-        <div className='inline-flex'>
-          <GiThreeLeaves className={`bg-main-honey text-4xl rounded-full cursor-pointer block float-left
-          mr-2 flex-shrink-0 ${open && 'rotate-[360deg]'} duration-700 p-1`} />
-          <h1 className={`text-white origin-left font-medium text-2xl ${!open && 'hidden'}`}>Winzen's Cafe</h1>
+    <div className="flex">
+      {isLoggedIn && <Sidebar />} 
+      <div
+        className={`relative h-screen flex justify-start items-center bg-cover bg-center ${isLoggedIn ? 'hidden' : 'block'} w-full pl-60`}
+        style={{ backgroundImage: `url(${bgImage})` }}
+      >
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="relative z-10 bg-[#ECEAEB] bg-opacity-90 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <div className="mb-4">
+            <img
+              src="../src/assets/images/resizedlogo.png"
+              alt="Winzen's Cafe"
+              className="mx-auto w-20 mb-4"
+            />
+            <h1 className="text-2xl font-semibold text-main-green mb-4">Winzen's Cafe</h1>
+            <h2 className='text-1xl font-thin text-gray-600'>Log in to Stay Brewed and Connected</h2>
+          </div>
+          <form onSubmit={handleLogin}>
+            <div className="mb-6 text-left relative">
+              <label className="block text-dark-green font-medium mb-2">Staff ID</label>
+              <div className="flex items-center border border-gray-100 rounded-md px-3 py-2">
+                <FaEnvelope className="text-main-green mr-3" />
+                <input
+                  type="text"
+                  className="w-full border-none focus:ring-0 focus:outline-none bg-transparent"
+                  placeholder="Enter your Staff ID"
+                  value={staffId}
+                  onChange={(e) => setStaffId(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="mb-6 text-left relative">
+              <label className="block text-dark-green font-medium mb-2">Password</label>
+              <div className="flex items-center border border-gray-100 rounded-md px-3 py-2">
+                <FaLock className="text-main-green mr-3" />
+                <input
+                  type="password"
+                  className="w-full border-none focus:ring-0 focus:outline-none bg-transparent"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="mb-4 text-right">
+              <a href="#" className="text-main-green hover:underline text-sm">
+                Forgot Password?
+              </a>
+            </div>
+            <div className="mb-4 flex justify-center">
+              <ReCAPTCHA
+                sitekey="6LeryFUqAAAAAM0hUPAVVL7Uy4vtgA-kbKVXkdJB"
+                onChange={(value) => setCaptchaValue(value)}
+                theme="dark"
+              />
+            </div>
+            {error && <div className="text-red-500 mb-4">{error}</div>}
+            <button
+              type="submit"
+              className="w-full bg-main-green text-main-honey py-2 px-4 rounded-md hover:bg-dark-green transition-all"
+            >
+              Login
+            </button>
+          </form>
         </div>
-        <div className={`flex items-center rounded-md bg-light-white mt-6 ${!open ? 'px-2.5' : 'px-4'} py-2`}>
-          <BsSearch className={`text-white text-lg block float-left cursor-pointer ${open && 'mr-2'}`} />
-          <input type={"search"}
-            placeholder='Search' className={`text-base bg-transparent w-full text-white focus:outline-none ${!open && 'hidden'}`} />
-        </div>
-
-        {/* Menu List */}
-        <ul className='pt-2'>
-          {Menus.map((menu) => (
-            <React.Fragment key={menu.title}>
-              <li>
-                <NavLink
-                  to={menu.path}
-                  className={({ isActive }) =>
-                    `text-gray-300 text-sm flex items-center gap-x-4 cursor-pointer
-                    p-2 hover:bg-light-white hover:text-white rounded-md 
-                    ${menu.spacing ? 'mt-9' : 'mt-2'} ${isActive ? 'bg-main-honey text-main-green' : ''}`
-                  }
-                >
-                  <span className='text-2xl block float-left'>{menu.icon ? menu.icon : <RiDashboardFill />}</span>
-                  <span className={`text-base font-medium flex-1 duration-200 ${!open && 'hidden'}`}>
-                    {menu.title}
-                  </span>
-                  {menu.submenu && open && (
-                    <BsChevronDown className={`${openSubmenu[menu.title] && 'rotate-180'}`}
-                      onClick={() => setOpenSubmenu(prev => ({ ...prev, [menu.title]: !prev[menu.title] }))} />
-                  )}
-                </NavLink>
-              </li>
-              {menu.submenu && openSubmenu[menu.title] && open && (
-                <ul>
-                  {menu.submenuItems.map((submenuItem) => (
-                    <li key={submenuItem.title}>
-                      <NavLink 
-                        to={submenuItem.path}
-                        isActive={() => location.pathname === submenuItem.path} 
-                        className={({ isActive }) =>
-                          `text-sm flex items-center gap-x-4 cursor-pointer p-2 px-12 rounded-md ${
-                            isActive ? "text-main-honey" : "text-gray-300 hover:bg-light-white"
-                          }`
-                        }>
-                          <span className='text-2xl block float-left'>{menu.icon ? menu.icon : <RiDashboardFill />}</span>
-                          <span>{submenuItem.title}</span>
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </React.Fragment>
-          ))}
-        </ul>
-      </div>
-
-      {/* Content Area */}
-      <div className='p-7'>
-        <Routes>
-          <Route path="/" element={<div>Dashboard Page</div>} />
-          <Route path="/orders" element={<div>Orders Page</div>} />
-          <Route path="/manage-categories" element={<div>Manage Categories Page</div>} />
-          <Route path="/add-categories" element={<div>Add Categories Page</div>} />
-          <Route path="/manage-products" element={<div>Manage Products Page</div>} />
-          <Route path="/add-products" element={<div>Add Products Page</div>} />
-          <Route path="/stocks" element={<div>Stocks Page</div>} />
-          <Route path="/submenu1" element={<div>Submenu 1 Page</div>} />
-          <Route path="/submenu2" element={<div>Submenu 2 Page</div>} />
-          <Route path="/submenu3" element={<div>Submenu 3 Page</div>} />
-          <Route path="/submenu4" element={<div>Submenu 4 Page</div>} />
-          <Route path="/transactions" element={<div>Transactions Page</div>} />
-          <Route path="/sales-report" element={<div>Sales Report Page</div>} />
-          <Route path="/manage-users" element={<div>Manage Users Page</div>} />
-          <Route path="/add-users" element={<div>Add Users Page</div>} />
-          <Route path="/logout" element={<div>Logout Page</div>} />
-        </Routes>
       </div>
     </div>
   );
