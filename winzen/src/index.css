@@ -4,4 +4,25 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-  }
+    background: #ddebe8;
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+::-webkit-scrollbar {
+    display: none; 
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: transparent;
+}

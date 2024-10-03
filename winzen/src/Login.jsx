@@ -52,7 +52,7 @@ const Login = () => {
       <div className="flex">
         {isLoggedIn && <Sidebar />} 
         <div
-          className={`relative h-screen flex justify-start items-center bg-cover bg-center ${isLoggedIn ? 'hidden' : 'block'} w-full pl-60`}
+          className={`relative h-screen flex justify-start items-center bg-cover bg-center ${isLoggedIn ? 'hidden' : 'block'} w-full ${isLoggedIn ? '' : 'pl-60'}`}
           style={{ backgroundImage: `url(${bgImage})` }}
         >
           <div className="absolute inset-0 bg-black opacity-50"></div>

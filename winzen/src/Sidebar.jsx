@@ -82,7 +82,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
     }
 
     return (
-        <div className='flex h-screen'>
+        <div className='flex h-screen w-full'>
             <style>
                 {`
                 /* Add custom scrollbar styles */
@@ -106,12 +106,12 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
             </style>
             {/* Sidebar */}
             <div className={`bg-main-green h-full p-5 pt-8 ${open ? 'w-72 min-w-72' : 'w-20 min-w-20'} duration-300 relative overflow-auto`}>
-            <div className="absolute top-1 right-0">
-                <BsArrowLeftShort 
-                    className={`bg-white text-main-green text-3xl rounded-full border border-main-green cursor-pointer ${!open && 'rotate-180'}`} 
-                    onClick={() => setOpen(!open)} 
-                />
-            </div>
+                <div className="absolute top-1 right-1">
+                    <BsArrowLeftShort 
+                        className={`bg-white text-main-green text-3xl rounded-full border border-main-green cursor-pointer ${!open && 'rotate-180'}`} 
+                        onClick={() => setOpen(!open)} 
+                    />
+                </div>
                 <div className='inline-flex'>
                     <GiThreeLeaves className={`bg-main-honey text-4xl rounded-full cursor-pointer block float-left
                     mr-2 flex-shrink-0 ${open && 'rotate-[360deg]'} duration-700 p-1`} />
@@ -172,7 +172,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
         </div>
 
         {/* Content Area */}
-        <div className='p-7 flex-grow overflow-auto'>
+        <div className='flex-grow overflow-auto'>
             <Routes>
                 <Route path="/home" element={<div>Dashboard Page</div>} />
                 <Route path="/orders" element={<Orders />} />
