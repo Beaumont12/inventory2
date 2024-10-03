@@ -20,7 +20,7 @@ export default {
         'honey': '#E5BB69',
         'light-honey': '#FFD283',
         'main-honey': '#DDB04B',
-        'main-bg': 'whitesmoke',
+        'main-bg': '#e0f2f1',
       },
     },
   },

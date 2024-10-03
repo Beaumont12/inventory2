@@ -10,6 +10,18 @@ import { MdAddBox } from "react-icons/md";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Loader from 'react-js-loader';
 import Orders from './components/Orders';
+import Managecategory from './components/Managecategory';
+import Home from './components/Home';
+import Addcategory from './components/Addcategory';
+import Manageproducts from './components/Manageproducts';
+import Addproducts from './components/Addproducts';
+import History from './components/History';
+import Overallsale from './components/Overallsale';
+import Ingredients from './components/inventory/Ingredients';
+import Utensils from './components/inventory/Utensils';
+import Inventory from './components/inventory/Inventory';
+import Manageuser from './components/Manageuser';
+import Adduser from './components/Adduser';
 import App from './App';
 
 const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
@@ -43,12 +55,12 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
     };       
 
     const Menus = [
-        { title: "Dashboard", path: "/home", icon: <RiDashboardFill />, roles: ["Admin", "SuperAdmin"] },
-        { title: "Mange Orders", path: "/orders", icon: <BsCartCheckFill />, roles: ["Admin", "SuperAdmin"] },
-        { title: "Manage Categories", path: "/manage-categories", icon: <BiSolidCategory />, roles: ["Admin", "SuperAdmin"] },
-        { title: "Add Categories", path: "/add-categories", icon: <MdAddBox />, roles: ["Admin", "SuperAdmin"] },
-        { title: "Manage Products", path: "/manage-products", icon: <BsCartFill />, roles: ["Admin", "SuperAdmin"] },
-        { title: "Add Products", path: "/add-products", icon: <BsCartPlusFill />, roles: ["Admin", "SuperAdmin"] },
+        { title: "Dashboard", path: "/home", icon: <RiDashboardFill />, roles: ["Admin", "Super Admin"] },
+        { title: "Mange Orders", path: "/orders", icon: <BsCartCheckFill />, roles: ["Admin", "Super Admin"] },
+        { title: "Manage Categories", path: "/manage-categories", icon: <BiSolidCategory />, roles: ["Admin", "Super Admin"] },
+        { title: "Add Categories", path: "/add-categories", icon: <MdAddBox />, roles: ["Admin", "Super Admin"] },
+        { title: "Manage Products", path: "/manage-products", icon: <BsCartFill />, roles: ["Admin", "Super Admin"] },
+        { title: "Add Products", path: "/add-products", icon: <BsCartPlusFill />, roles: ["Admin", "Super Admin"] },
         {
             title: "Stocks",
             spacing: true,
@@ -56,18 +68,18 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
             path: "/stocks",
             icon: <BsBox2Fill />,
             submenuItems: [
-                { title: "Submenu 1", path: "/submenu1", roles: ["Admin", "SuperAdmin"] }, 
-                { title: "Submenu 2", path: "/submenu2", roles: ["Admin", "SuperAdmin"] }, 
-                { title: "Submenu 3", path: "/submenu3", roles: ["Admin", "SuperAdmin"] },
-                { title: "Submenu 4", path: "/submenu4", roles: ["Admin", "SuperAdmin"] },
-            ], roles: ["Admin", "SuperAdmin"]
+                { title: "Submenu 1", path: "/submenu1", roles: ["Admin", "Super Admin"] }, 
+                { title: "Submenu 2", path: "/submenu2", roles: ["Admin", "Super Admin"] }, 
+                { title: "Submenu 3", path: "/submenu3", roles: ["Admin", "Super Admin"] },
+                { title: "Submenu 4", path: "/submenu4", roles: ["Admin", "Super Admin"] },
+            ], roles: ["Admin", "Super Admin"]
 
         },
-        { title: "Transactions", path: "/transactions", spacing: true, icon: <FaHistory />, roles: ["Admin", "SuperAdmin"] },
-        { title: "Sales Report", path: "/sales-report", icon: <IoMdAnalytics />, roles: ["Admin", "SuperAdmin"] },
-        { title: "Manage Users", path: "/manage-users", spacing: true, icon: <FaUsers />, roles: ["SuperAdmin"] },
-        { title: "Add Users", path: "/add-users", icon: <FaUserPlus />, roles: ["SuperAdmin"] },
-        { title: "Logout", path: "/logout", spacing: true, icon: <AiOutlineLogout />, onClick: handleLogout, roles: ["Admin", "SuperAdmin"], element: <App/> },
+        { title: "Transactions", path: "/transactions", spacing: true, icon: <FaHistory />, roles: ["Admin", "Super Admin"] },
+        { title: "Sales Report", path: "/sales-report", icon: <IoMdAnalytics />, roles: ["Admin", "Super Admin"] },
+        { title: "Manage Users", path: "/manage-users", spacing: true, icon: <FaUsers />, roles: ["Super Admin"] },
+        { title: "Add Users", path: "/add-users", icon: <FaUserPlus />, roles: ["Super Admin"] },
+        { title: "Logout", path: "/logout", spacing: true, icon: <AiOutlineLogout />, onClick: handleLogout, roles: ["Admin", "Super Admin"], element: <App/> },
     ];
 
     const filteredMenus = Menus.filter(menu => !menu.roles || menu.roles.includes(role));
@@ -174,21 +186,21 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
         {/* Content Area */}
         <div className='flex-grow overflow-auto'>
             <Routes>
-                <Route path="/home" element={<div>Dashboard Page</div>} />
+                <Route path="/home" element={<Home/>} />
                 <Route path="/orders" element={<Orders />} />
-                <Route path="/manage-categories" element={<div>Manage Categories Page</div>} />
-                <Route path="/add-categories" element={<div>Add Categories Page</div>} />
-                <Route path="/manage-products" element={<div>Manage Products Page</div>} />
-                <Route path="/add-products" element={<div>Add Products Page</div>} />
-                <Route path="/stocks" element={<div>Stocks Page</div>} />
-                <Route path="/submenu1" element={<div>Submenu 1 Page</div>} />
-                <Route path="/submenu2" element={<div>Submenu 2 Page</div>} />
+                <Route path="/manage-categories" element={<Managecategory/>} />
+                <Route path="/add-categories" element={<Addcategory/>} />
+                <Route path="/manage-products" element={<Manageproducts/>} />
+                <Route path="/add-products" element={<Addproducts/>} />
+                <Route path="/stocks" element={<Inventory/>} />
+                <Route path="/submenu1" element={<Ingredients/>} />
+                <Route path="/submenu2" element={<Utensils/>} />
                 <Route path="/submenu3" element={<div>Submenu 3 Page</div>} />
                 <Route path="/submenu4" element={<div>Submenu 4 Page</div>} />
-                <Route path="/transactions" element={<div>Transactions Page</div>} />
-                <Route path="/sales-report" element={<div>Sales Report Page</div>} />
-                <Route path="/manage-users" element={<div>Manage Users Page</div>} />
-                <Route path="/add-users" element={<div>Add Users Page</div>} />
+                <Route path="/transactions" element={<History/>} />
+                <Route path="/sales-report" element={<Overallsale/>} />
+                <Route path="/manage-users" element={<Manageuser/>} />
+                <Route path="/add-users" element={<Adduser/>} />
             </Routes>
         </div>
     </div>

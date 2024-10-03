@@ -35,12 +35,12 @@ const App = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-  
+
     if (!captchaValue) {
       setError("Please complete the CAPTCHA.");
       return;
     }
-  
+
     try {
       const dbRef = ref(db); 
       const snapshot = await get(child(dbRef, "staffs")); 
@@ -51,27 +51,32 @@ const App = () => {
   
         if (staff) {
           if (staff.Password === password) {
-            alert(`Welcome back, ${staff.Name}!`);
-            setIsLoggedIn(true);
-            
-            // Save the role and staff ID to local storage
-            const userData = {
-              staffId: staffId,
-              role: staff.Role,
-              email: staff.Email,
-              name: staff.Name,
-              phone: staff.Phone,
-              age: staff.Age,
-              imageUrl: staff.ImageUrl,
-              password: staff.Password,
-            };
-            localStorage.setItem("userData", JSON.stringify(userData));
-
-            localStorage.setItem("isLoggedIn", "true");
-            checkLoginStatus();
-            console.log("userData", userData)
+            // Check if the role is Admin or Super Admin
+            if (staff.Role === "Admin" || staff.Role === "Super Admin") {
+              alert(`Welcome back, ${staff.Name}!`);
+              setIsLoggedIn(true);
+              
+              // Save the role and staff ID to local storage
+              const userData = {
+                staffId: staffId,
+                role: staff.Role,
+                email: staff.Email,
+                name: staff.Name,
+                phone: staff.Phone,
+                age: staff.Age,
+                imageUrl: staff.ImageUrl,
+                password: staff.Password,
+              };
+              localStorage.setItem("userData", JSON.stringify(userData));
   
-            navigate("/home");
+              localStorage.setItem("isLoggedIn", "true");
+              checkLoginStatus();
+              console.log("userData", userData);
+  
+              navigate("/home");
+            } else {
+              setError("Access restricted to Admin and Super Admin only.");
+            }
           } else {
             setError("Invalid Password. Please try again.");
           }
@@ -84,7 +89,7 @@ const App = () => {
     } catch (error) {
       setError("Error fetching staff data. Please try again later.");
     }
-  };  
+};
 
   return (
     <div className="flex">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, update, set, remove } from 'firebase/database';
 import { initializeApp } from 'firebase/app';
+import { BiShoppingBag } from "react-icons/bi";
 import { FaUser, FaUserTie, FaClipboard, FaFire, FaSnowflake } from "react-icons/fa";
 
 // Firebase configuration
@@ -93,27 +94,28 @@ const Orders = () => {
 
   return (  
     <div className="flex-grow items-center justify-center
-    bg-[#e0f2f1]" style={{ scrollBehavior: 'smooth'}}>
+    bg-main-bg" style={{ scrollBehavior: 'smooth'}}>
       <div className="p-7">
-        <h1 className="text-4xl md:text-6xl text-center font-bold text-black mt-2">Ongoing Orders</h1>
+        <h1 className="text-4xl md:text-6xl text-center font-bold text-black mt-2">
+          <BiShoppingBag className="inline-block mr-2" />Ongoing Orders</h1>
         <h3 className="text-lg md:text-base text-center mt-4 md:mt-8 font-semibold bg-main-green text-white">PLEASE MAKE SURE TO DOUBLE CHECK</h3>
         <hr className="my-4 border-gray-500 border-2" />
         <div className="flex justify-start mb-4">
           {/* Toggle buttons for filtering orders */}
           <button
-            className={`bg-darker-honey text-white px-4 py-2 rounded-md mr-4 ${orderType === 'All' ? 'bg-red-700' : ''}`}
+            className={`bg-darker-honey text-white px-4 py-2 rounded-md mr-4 hover:bg-light-honey ${orderType === 'All' ? 'bg-red-700' : ''}`}
             onClick={() => setOrderType('All')}
           >
             All
           </button>
           <button
-            className={`bg-light-green text-white px-4 py-2 rounded-md mr-4 ${orderType === 'Dine In' ? 'bg-blue-700' : ''}`}
+            className={`bg-light-green text-white px-4 py-2 rounded-md mr-4 hover:bg-teal-500 ${orderType === 'Dine In' ? 'bg-light-green' : ''}`}
             onClick={() => setOrderType('Dine In')}
           >
             Dine In
           </button>
           <button
-            className={`bg-light-green text-white px-4 py-2 rounded-md ${orderType === 'Take Out' ? 'bg-blue-700' : ''}`}
+            className={`bg-light-green text-white px-4 py-2 rounded-md hover:bg-teal-500 ${orderType === 'Take Out' ? 'bg-light-green' : ''}`}
             onClick={() => setOrderType('Take Out')}
           >
             Take Out
@@ -205,7 +207,7 @@ const Orders = () => {
                   <p className="text-sm md:text-base text-center bg-yellow-500 text-white font-semibold">{order.Preference}</p>
                 </div>
                 <div className="flex justify-center">
-                  <button className="text-white bg-red-700 font-bold py-2 px-4 rounded-md mt-6" onClick={() => cancelOrder(orderNumber)}>Cancel Order</button>
+                  <button className="text-white hover:bg-red-500 bg-red-700 font-bold py-2 px-4 rounded-md mt-6" onClick={() => cancelOrder(orderNumber)}>Cancel Order</button>
                 </div>
               </div>
             ))}
