@@ -205,15 +205,13 @@ const Overallsale = () => {
   };
 
   return (
-    <div className="flex-1 bg-main-bg">
+    <div className="flex-1 bg-white">
       <div className="p-7">
-        <h1 className="text-6xl text-center mt-2 font-bold text-black">
-          <IoAnalytics className="inline-block mr-2" />Sales Report</h1>
+        <h1 className="text-6xl text-center mt-2 font-bold text-black">Sales Report</h1>
         <h3 className="text-lg md:text-base bg-main-green text-white mb-6 text-center mt-4 md:mt-8 font-semibold">
           ENJOY BROWSING
         </h3>
-        <hr className="my-4 border-gray-500 border-2" />
-        <div className="flex justify-center mb-4 bg-main-green p-2">
+        <div className="flex justify-center mb-4 bg-main-green p-2 w-fit mx-auto rounded-lg">
           <label htmlFor="months" className="mr-2 mt-2 text-white font-bold">Select a month:</label>
           <select
             value={selectedMonth}
@@ -237,7 +235,6 @@ const Overallsale = () => {
             ))}
           </select>
         </div>
-        <hr className="my-4 border-gray-500 border-2" />
         <div className="flex justify-center mb-4">
           <Calendar
             onChange={handleDateChange}

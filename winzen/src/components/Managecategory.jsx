@@ -131,15 +131,13 @@ const Managecategory = () => {
   };
 
   return (
-    <div className="flex-1 bg-main-bg bg-cover bg-center bg-no-repeat h-screen">
-      <div className="p-4">
-        <h1 className="text-6xl text-center text-black font-bold mt-2">
-          <BiCategoryAlt className="inline-block mr-2" /> Manage Category</h1>
+    <div className="flex-1 bg-white bg-cover bg-center bg-no-repeat h-screen">
+      <div className="p-7">
+        <h1 className="text-6xl text-center text-black font-bold mt-2">Manage Category</h1>
         <h3 className="text-lg md:text-base text-center text-white mt-4 md:mt-8 font-semibold bg-main-green">EDIT ONLY WHEN NECESSARY</h3>
-        <hr className="my-4 border-gray-500 border-2" />
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
           {categories.map(category => (
-            <div key={category.id} className="bg-white border border-gray-100 rounded-xl p-4 flex flex-col justify-center items-center text-center shadow-lg">
+            <div key={category.id} className="bg-gray-100 border border-gray-100 rounded-xl p-4 flex flex-col justify-center items-center text-center shadow-lg">
               <div className="text-main-green font-bold text-2xl mb-1 mt-2">{category.name}</div>
               <div className="text-white font-semibold text-xs bg-main-honey rounded-xl p-1">{category.id}</div>
               <div className="text-gray-700 font-bold text-sm mt-1">{category.productCount} Products</div>

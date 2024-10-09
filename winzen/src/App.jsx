@@ -36,11 +36,6 @@ const App = () => {
     e.preventDefault();
     setError("");
 
-    if (!captchaValue) {
-      setError("Please complete the CAPTCHA.");
-      return;
-    }
-
     try {
       const dbRef = ref(db); 
       const snapshot = await get(child(dbRef, "staffs")); 
@@ -95,11 +90,11 @@ const App = () => {
     <div className="flex">
       {isLoggedIn && <Sidebar />} 
       <div
-        className={`relative h-screen flex justify-start items-center bg-cover bg-center ${isLoggedIn ? 'hidden' : 'block'} w-full pl-60`}
+        className={`relative h-screen flex justify-start items-center bg-cover bg-center ${isLoggedIn ? 'hidden' : 'block'} w-full pl-32`}
         style={{ backgroundImage: `url(${bgImage})` }}
       >
         <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative z-10 bg-[#ECEAEB] bg-opacity-90 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+        <div className="relative z-10 bg-[#ECEAEB] bg-opacity-90 p-8 rounded-xl shadow-lg shadow-gray-600 max-w-md w-full text-center">
           <div className="mb-4">
             <img
               src="../src/assets/images/resizedlogo.png"
@@ -142,13 +137,6 @@ const App = () => {
               <a href="#" className="text-main-green hover:underline text-sm">
                 Forgot Password?
               </a>
-            </div>
-            <div className="mb-4 flex justify-center">
-              <ReCAPTCHA
-                sitekey="6LeryFUqAAAAAM0hUPAVVL7Uy4vtgA-kbKVXkdJB"
-                onChange={(value) => setCaptchaValue(value)}
-                theme="dark"
-              />
             </div>
             {error && <div className="text-red-500 mb-4">{error}</div>}
             <button

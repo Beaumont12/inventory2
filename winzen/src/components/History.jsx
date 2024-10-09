@@ -190,42 +190,37 @@ const History = () => {
         </div>
       )}
 
-      <div className="p-7">
-        <h1 className="text-6xl text-center mt-2 font-bold">
-          <MdOutlineHistory className="inline-block mr-2" />Transaction History</h1>
+      <div className="p-7 bg-white">
+        <h1 className="text-6xl text-center mt-2 font-bold">Transaction History</h1>
         <h3 className="text-lg md:text-base text-center mt-4 md:mt-8 font-semibold bg-main-green text-white">PLEASE MAKE SURE TO DOUBLE CHECK</h3>
-        <div className="mt-4">
-          <hr className="my-4 border-gray-500 border-2" />
+        <div className="mt-8">
           <div className="flex justify-between">
-            <div className="relative mb-4 w-full mr-2">
+            <div className="relative mb-4 w-full mr-2 ">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <input
                 type="text"
                 placeholder="Search products by name"
                 value={searchQuery}
                 onChange={handleSearchInputChange}
-                className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
+                className="appearance-none block w-full bg-white text-gray-700 border shadow-md border-gray-200 rounded-lg py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
               />
             </div>
             <select
               value={selectedMonth}
               onChange={handleMonthChange}
-              className="appearance-none bg-main-honey text-light-green font-semibold border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4"
+              className="appearance-none bg-main-honey text-light-green font-semibold border border-gray-200 rounded-lg py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4"
             >
               {months.map((month) => (
                 <option key={month.value} value={month.value}>{month.label}</option>
               ))}
             </select>
           </div>
-          <div className="p-4">
-            <div className="bg-main-green rounded-lg p-4">
+            <div className="bg-main-green rounded-lg p-4 shadow-lg mt-4">
               <h2 className="text-xl font-semibold mb-2 text-white">Total Transactions</h2>
               <p className='text-white'>Total Quantity: {totalQuantity}</p>
               <p className='text-white'>Total Amount: &#8369;{totalAmount.toFixed(2)}</p>
             </div>
-          </div>
-          <hr className="my-4 border-gray-500 border-2" />
-          <div className="flex justify-between items-center p-4 my-4 bg-main-honey text-white rounded-lg shadow-md font-extrabold">
+          <div className="flex justify-between items-center p-4 my-4 bg-main-honey text-white rounded-lg shadow-md font-extrabold mt-4">
             <span className="text-lg w-1/5 text-center">Order #</span>
             <span className="text-lg w-1/5 text-center">Staff Name</span>
             <span className="text-lg w-1/5 text-center">Date</span>

@@ -93,40 +93,36 @@ const Orders = () => {
   };  
 
   return (  
-    <div className="flex-grow items-center justify-center
-    bg-main-bg" style={{ scrollBehavior: 'smooth'}}>
+    <div className="flex-grow items-center justify-center bg-white" style={{ scrollBehavior: 'smooth'}}>
       <div className="p-7">
-        <h1 className="text-4xl md:text-6xl text-center font-bold text-black mt-2">
-          <BiShoppingBag className="inline-block mr-2" />Ongoing Orders</h1>
+        <h1 className="text-4xl md:text-6xl text-center font-bold text-black mt-2">Ongoing Orders</h1>
         <h3 className="text-lg md:text-base text-center mt-4 md:mt-8 font-semibold bg-main-green text-white">PLEASE MAKE SURE TO DOUBLE CHECK</h3>
-        <hr className="my-4 border-gray-500 border-2" />
-        <div className="flex justify-start mb-4">
+        <div className="flex justify-start mb-4 mt-5">
           {/* Toggle buttons for filtering orders */}
           <button
-            className={`bg-darker-honey text-white px-4 py-2 rounded-md mr-4 hover:bg-light-honey ${orderType === 'All' ? 'bg-red-700' : ''}`}
+            className={`text-white px-4 py-2 rounded-md mr-4 hover:bg-light-honey hover:text-main-green ${orderType === 'All' ? 'bg-darker-honey' : 'bg-light-green'}`}
             onClick={() => setOrderType('All')}
           >
             All
           </button>
           <button
-            className={`bg-light-green text-white px-4 py-2 rounded-md mr-4 hover:bg-teal-500 ${orderType === 'Dine In' ? 'bg-light-green' : ''}`}
+            className={`text-white px-4 py-2 rounded-md mr-4 hover:bg-light-honey hover:text-main-green ${orderType === 'Dine In' ? 'bg-darker-honey' : 'bg-light-green'}`}
             onClick={() => setOrderType('Dine In')}
           >
             Dine In
           </button>
           <button
-            className={`bg-light-green text-white px-4 py-2 rounded-md hover:bg-teal-500 ${orderType === 'Take Out' ? 'bg-light-green' : ''}`}
+            className={`text-white px-4 py-2 rounded-md hover:bg-light-honey hover:text-main-green ${orderType === 'Take Out' ? 'bg-darker-honey' : 'bg-light-green'}`}
             onClick={() => setOrderType('Take Out')}
           >
             Take Out
           </button>
         </div>
-        <hr className="my-4 border-gray-500 border-2" />
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8 w-full overflow-hidden">
           {Object.entries(orders)
             .filter(([orderNumber, order]) => filterOrdersByType(order)) // Filter orders based on order type
             .map(([orderNumber, order]) => (
-              <div key={orderNumber} className="rounded-lg shadow-lg bg-white border border-gray-100 p-4 mb-4 mt-2"> {/* Add custom class for order slip background */}
+              <div key={orderNumber} className="rounded-lg shadow-lg bg-gray-100 border border-gray-100 p-4 mb-4 mt-2"> {/* Add custom class for order slip background */}
                 <h3 className="text-lg md:text-2xl font-semibold mb-4 text-center bg-main-honey text-white">Order Slip</h3>
                 <div className="flex justify-between mb-4">
                   <p className="text-sm md:text-sm font-meduim border-b border-black pb-1 text-green-700">

@@ -181,10 +181,9 @@ const Manageuser = () => {
 
   return (
     <div>
-      <div className="flex-1 bg-main-bg">
+      <div className="flex-1 bg-white">
         <div className="p-7">
-          <h1 className="text-6xl text-center mt-2 font-bold">
-            <PiUsersThree className="inline-block mr-2" />Manage Users</h1>
+          <h1 className="text-6xl text-center mt-2 font-bold">Manage Users</h1>
           <h3 className="text-lg md:text-base text-center text-white mt-4 md:mt-8 font-semibold bg-main-green">EDIT ONLY WHEN NECESSARY</h3>
           {/* Search bar */}
           <hr className="my-4 border-gray-500 border-2" />
@@ -192,7 +191,7 @@ const Manageuser = () => {
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
           <input
             type="text"
-            placeholder="Search products by name"
+            placeholder="Search user by name"
             value={searchQuery}
             onChange={(e)=> setSearchQuery(e.target.value)}
             className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"

@@ -186,7 +186,7 @@ const Utensils = () => {
   };  
 
   return (
-    <div className='flex-1 bg-main-bg overflow-auto h-full'>
+    <div className='flex-1 bg-white overflow-auto h-full'>
       <div className="p-7">
         {renderAlert()}
         <h1 className="text-6xl text-center mt-2 font-bold text-black">Utensils Inventory</h1>

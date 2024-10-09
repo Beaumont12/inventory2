@@ -383,31 +383,44 @@ const Manageproducts = () => {
 
   const filteredProducts = products.filter((product) => {
     const categoryMatch = selectedCategory === 'All' || product.Category === selectedCategory;
-    const searchMatch = product.Name.toLowerCase().includes(searchQuery.toLowerCase());
+  
+    // Ensure product.Name and product.Variations are not undefined
+    const searchQueryLower = searchQuery.toLowerCase();
+    
+    // Check if product name matches the search query
+    const nameMatch = product.Name ? product.Name.toLowerCase().includes(searchQueryLower) : false;
+    
+    // Search for size across "hot" and "iced" variations
+    const sizeMatch = product.Variations && product.Variations.temperature
+      ? Object.values(product.Variations.temperature).some(variation =>
+          Object.keys(variation).some(size => size.toLowerCase().includes(searchQueryLower))
+        )
+      : false;
+  
+    // Match either by product name or by size
+    const searchMatch = nameMatch || sizeMatch;
+  
     return categoryMatch && searchMatch;
-  });
+  });  
   
   return (
-    <div className="flex-1 bg-main-bg bg-cover bg-center bg-no-repeat h-screen">
+    <div className="flex-1 bg-white">
       <div className="p-7">
-        <h1 className="text-6xl text-center mt-2 font-bold text-black">
-          <BsCart3 className="inline-block mr-2" />Manage Products
+        <h1 className="text-6xl text-center mt-2 font-bold text-black">Manage Products
         </h1>
         <h3 className="text-lg md:text-base bg-main-green text-white text-center mt-4 md:mt-8 font-semibold">
           EDIT PRODUCTS ONLY WHEN NECESSARY
         </h3>
-        <hr className="my-4 border-gray-500 border-2" />
-        <div className="relative mb-4">
+        <div className="relative mb-4 mt-4">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             placeholder="Search products by name"
             value={searchQuery}
             onChange={handleSearchInputChange}
-            className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
+            className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded-lg py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
           />
         </div>
-        <hr className="my-4 border-gray-500 border-2" />
         <div className="flex mt-2 mb-2 overflow-x-auto p-2" style={{ scrollBehavior: 'smooth', background: 'transparent' }}>
           <div key={'All'} className="mr-4 mb-4 min-w-20">
             <button
@@ -439,7 +452,7 @@ const Manageproducts = () => {
             {filteredProducts.map((product, index) => (
               <div key={index} className="relative">
                 {/* Product card container */}
-                <div className="rounded-md bg-white border border-gray-100 p-4 mb-4 shadow-bottom order-slip-bg cursor-pointer">
+                <div className="rounded-md bg-gray-100 border border-gray-100 h-[98%] p-4 mb-4 shadow-bottom order-slip-bg cursor-pointer">
                   {/* Product details */}
                   <div onClick={() => showProductDetails(product)}>
                     <p className="text-sm md:text-base font-bold text-main-green"><strong>{product.Name}</strong></p>
@@ -457,13 +470,13 @@ const Manageproducts = () => {
                       {product.stockStatus}
                     </span>
                   </p>
-                  <p className="font-semibold mt-2 text-xs rounded-md p-2 bg-white text-justify">
+                  <p className="font-semibold mt-2 text-xs rounded-md p-2 bg-white text-justify shadow-md">
                     {product.Description}
                   </p>
                     <img
                       src={product.imageURL}
                       alt={product.Name}
-                      className="w-full h-auto mt-2 rounded-lg"
+                      className="w-full h-auto mt-2 rounded-lg shadow-lg"
                     />
                   </div>
                   {/* Delete button positioned absolute */}

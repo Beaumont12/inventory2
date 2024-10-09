@@ -224,9 +224,9 @@ const Home = () => {
   };
   
   return (
-    <div className="flex-1 bg-main-bg">
+    <div className="flex-1 bg-white">
       <div className="p-7">
-        <div className='border border-gray-100 p-4 rounded-lg bg-white flex items-center justify-between shadow-md'>
+        <div className='border border-gray-100 p-4 rounded-lg bg-gray-100 flex items-center justify-between shadow-md'>
           <div className='md:mb-4 h-auto'>
             <h2 className="text-xs font-semibold mb-3">Dashboard Panel</h2>
             <p className="text-3xl font-bold">Welcome back, {adminName}!</p>
@@ -268,9 +268,8 @@ const Home = () => {
             value={<span className="text-md">{totalSales.toFixed(2)}</span>}
           />
         </div>
-        <hr className="my-4 border-gray-500 border-2 mt-10" />
-        <div className=" flex justify-center bg-main-green p-2">
-          <label htmlFor="months" className="mr-2 mt-2 font-bold text-white">Select A month:</label>
+        <div className=" flex justify-center bg-gray-100 p-2 mt-10 rounded shadow-md border border-gray-100">
+          <label htmlFor="months" className="mr-2 mt-2 font-bold text-black">MONTH:</label>
           <select
             id="months"
             className="p-2 border border-gray-100 rounded-lg shadow-md"
@@ -282,22 +281,27 @@ const Home = () => {
             ))}
           </select>
         </div>
-        <hr className="my-4 border-gray-500 border-2" />
-        <div className="flex justify-around mt-10 bg-white border border-gray-100 p-2 rounded-lg shadow-md">
-        
-          <div className='w-80 h-80'>
-            <Doughnut data={doughnutChartData1} />
+        <div className="flex flex-col md:flex-row justify-around mt-10 w-full">
+          {/* Donut Charts inside bg-gray-100 */}
+          <div className="flex justify-around bg-gray-100 border border-gray-100 p-10 rounded-lg shadow-md w-full md:w-2/3 lg:w-3/4 mr-8">
+            <div className='w-[400px] h-[400px] items-center text-center'>
+              <h2 className='font-extrabold'>ORDERS</h2>
+              <Doughnut data={doughnutChartData1} />
+            </div>
+            <div className='w-[400px] h-[400px] md:w-[400] md:h-[400] text-center items-center'>
+              <h2 className='font-extrabold'>CUSTOMERS</h2>
+              <Doughnut data={doughnutChartData2} />
+            </div>
           </div>
-          <div className='w-80 h-80'>
-            <Doughnut data={doughnutChartData2} />
-          </div>
-          <div className="flex flex-col justify-start w-1/3 bg-main-green max-h-80 p-4 shadow-md border border-gray-100 rounded-lg overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-1 mt-2 text-center text-white">Ongoing Orders</h2>
-            <div className="flex justify-between items-center p-4 my-2 bg-yellow-500 rounded-lg shadow-md font-extrabold text-white">
+
+          {/* Ongoing Orders moved outside */}
+          <div className="flex flex-col justify-start w-full md:w-1/3 lg:max-w-xs bg-gray-100 p-4 h-[480px] shadow-md border border-gray-100 rounded-lg overflow-y-auto mt-4 md:mt-0">
+            <h2 className="text-lg font-semibold mb-1 mt-2 text-center text-black">Ongoing Orders</h2>
+            <div className="flex justify-between items-center p-4 my-2 bg-main-green rounded-lg shadow-md font-extrabold text-white">
               <span className="text-sm text-center">Order #</span>
               <span className="text-sm text-center">Staff Name</span>
             </div>
-            <ul>
+            <ul className="flex-grow">
               {Object.entries(orders).map(([orderNumber, order]) => (
                 <li key={orderNumber} className="flex justify-between items-center p-4 my-4 bg-white rounded-lg shadow-md text-center">
                   <span className="text-sm font-semibold text-center">{orderNumber}</span>
@@ -307,6 +311,7 @@ const Home = () => {
             </ul>
           </div>
         </div>
+
       </div>
     </div>
   );

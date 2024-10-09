@@ -255,19 +255,18 @@ const Ingredients = () => {
   };
   
   return (
-    <div className='flex-1 bg-main-bg overflow-auto h-full'>
+    <div className='flex-1 bg-white overflow-auto h-full'>
       <div className="p-7 ">
         {renderAlert()}
         <h1 className="text-6xl text-center mt-2 font-bold text-black">Ingredients Inventory</h1>
         <h3 className="text-lg md:text-base bg-main-green text-white mb-4 text-center mt-4 md:mt-8 font-semibold">
           ENJOY BROWSING
         </h3>
-        <hr className="my-4 border-gray-500 border-2" />
         <div className="relative mb-4">
           <input
             type="text"
             placeholder="Search by ID or Name..."
-            className="border rounded-md p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md"
+            className="border rounded-lg p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -275,14 +274,13 @@ const Ingredients = () => {
             <FaSearch />
           </div>
         </div>
-        <hr className="my-4 border-gray-500 border-2" />
         {/* Category selector */}
         <div className="grid grid-cols-4 gap-4 mb-6 justify-items-center">
           {Object.keys(ingredients).map((category) => (
             <div 
               key={category}
               onClick={() => handleCategoryClick(category)}
-              className={`flex items-center p-4 rounded-lg shadow-md cursor-pointer ${selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-white'}`}
+              className={`flex items-center p-4 rounded-lg shadow-md cursor-pointer ${selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
               <div className="text-4xl mr-2">{iconMap[category]}</div>
               <span className="text-xl font-semibold">{category}</span>

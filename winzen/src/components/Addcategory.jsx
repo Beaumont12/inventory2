@@ -75,10 +75,9 @@ const AddCategory = () => {
   };
 
   return (
-    <div className="flex-1 bg-main-bg h-screen">
-      <div className="p-4">
-        <h1 className="text-6xl text-black text-center mt-2 font-bold">
-          <BiCategoryAlt className="inline-block mr-2" /> Add Category
+    <div className="flex-1 bg-white h-screen">
+      <div className="p-7">
+        <h1 className="text-6xl text-black text-center mt-2 font-bold">Add Category
         </h1>
         <h3 className="text-lg md:text-base text-white text-center mt-4 md:mt-8 font-semibold bg-main-green">
           MAKE SURE CATEGORY ID IS UNIQUE
