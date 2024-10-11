@@ -1,24 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import 'react-image-crop/dist/ReactCrop.css';
 import { ref, set, get } from 'firebase/database';
-import { BsCartPlus } from "react-icons/bs";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { app, db } from '../../firebaseConfig'
+import { app, db } from '../../firebaseConfig';
 import Cropper from 'react-easy-crop';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB8xVDaDEehGAqTAKtmqdD97pkBSIQJHyI",
-  authDomain: "wenzinpossystem.firebaseapp.com",
-  databaseURL: "https://wenzinpossystem-default-rtdb.firebaseio.com",
-  projectId: "wenzinpossystem",
-  storageBucket: "wenzinpossystem.appspot.com",
-  messagingSenderId: "910317765447",
-  appId: "1:910317765447:web:16a7a67c68b7216d0d4262"
-};
-
-const storage = getStorage();
-
 const AddProducts = () => {
+  const [productType, setProductType] = useState(''); // For selecting Drinks or Pastry
   const [src, setSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -55,6 +43,15 @@ const AddProducts = () => {
     });
   }, []);
 
+  const handleTypeSelection = (type) => {
+    setProductType(type);
+    // Reset form fields when switching between Drinks and Pastry
+    setSrc(null);
+    setProductName('');
+    setDescription('');
+    setVariations([]);
+  };
+
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
@@ -78,25 +75,31 @@ const AddProducts = () => {
         Category: selectedCategory, 
         Name: productName,
         Description: description, 
-        Variations: {
-          temperature: {} 
-        },
+        Variations: {},  // Initialize variations empty for both drinks and pastries
         imageURL: '', 
         stockStatus: stockStatus
       };
 
-      variations.forEach(({ temperature, sizes }) => {
-        product.Variations.temperature[temperature] = {}; 
-        sizes.forEach(({ size, price }) => {
-          product.Variations.temperature[temperature][size] = price;
+      if (productType === 'Drinks') {
+        product.Variations.temperature = {}; 
+        variations.forEach(({ temperature, sizes }) => {
+          product.Variations.temperature[temperature] = {};
+          sizes.forEach(({ size, price }) => {
+            product.Variations.temperature[temperature][size] = price;
+          });
         });
-      });
+      } else if (productType === 'Pastry') {
+        // For Pastry, only add a single price without sizes or temperature
+        const priceString = variations[0]?.price || '0'; // Default to '0' if price is not available
+        product.Variations.price = parseFloat(priceString); // Convert to number
+      }      
 
       const newProductCount = productCount + 1;
       const productId = `Product${newProductCount}`;
       setProductCount(newProductCount);
 
       const croppedImageBlob = await getCroppedImageBlob();
+      const storage = getStorage(app);
       const photoRef = storageRef(storage, `OM/${productId}.jpg`);
       await uploadBytes(photoRef, croppedImageBlob);
       const photoUrl = await getDownloadURL(photoRef);
@@ -108,11 +111,12 @@ const AddProducts = () => {
       ]);
       console.log('Product added successfully');
 
+      // Reset form
       setSrc(null);
       setCrop({ x: 0, y: 0 });
       setZoom(1);
       setCroppedAreaPixels(null);
-      setSelectedCategory(categories[0]); 
+      setSelectedCategory(categories[0]);
       setProductName('');
       setDescription('');
       setVariations([]);
@@ -122,7 +126,7 @@ const AddProducts = () => {
       console.error('Error cropping image or adding product:', error);
       showAlertMessage('Error cropping image or adding product.');
     }
-  }, [croppedAreaPixels, selectedCategory, productName, description, variations, stockStatus, categories, productCount]);
+  }, [croppedAreaPixels, selectedCategory, productName, description, variations, stockStatus, categories, productCount, productType]);
 
   const getCroppedImageBlob = async () => {
     if (!croppedAreaPixels) return;
@@ -158,7 +162,7 @@ const AddProducts = () => {
     if (variations.length < 2) {
       setVariations([...variations, { temperature: '', sizes: [{ size: '', price: '' }] }]);
     } else {
-      showConfirmationMessage("Maximum 2 variations allowed");
+      showAlertMessage("Maximum 2 variations allowed");
     }
   };
 
@@ -214,140 +218,271 @@ const AddProducts = () => {
       )}
       <div className="p-7">
         <h1 className="text-6xl font-bold text-center text-black mb-4 mt-2">Add Products</h1>
-        <h3 className="text-lg md:text-base bg-main-green text-center text-white mt-4 md:mt-8 font-semibold">ADD NEW PRODUCT</h3>
-        <div className="flex justify-center items-center mt-4 rounded-lg">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              setSrc(null);
-              setSelectedCategory(categories[0]); // Reset selected category to the first category
-              setProductName('');
-              setDescription('');
-              setVariations([]);
-              onSelectFile(e);
-            }}
-            className="py-2 px-4 bg-main-honey rounded-lg text-white text-center items-center"
-          />
+        <h3 className="text-lg md:text-base rounded-lg bg-main-green text-center text-white mt-4 md:mt-8 font-semibold">ADD NEW DRINK OR PASTRY</h3>
+
+        {/* Drinks and Pastry Selection */}
+        <div className="flex justify-center mt-4">
+          <button
+            className={`mr-4 py-2 px-6 rounded-lg ${productType === 'Drinks' ? 'bg-main-honey text-black font-bold' : 'bg-main-green text-white'}`}
+            onClick={() => handleTypeSelection('Drinks')}
+          >
+            Drinks
+          </button>
+          <button
+            className={`py-2 px-6 rounded-lg ${productType === 'Pastry' ? 'bg-main-honey text-black font-bold' : 'bg-main-green text-white'}`}
+            onClick={() => handleTypeSelection('Pastry')}
+          >
+            Pastry
+          </button>
         </div>
-        <div className="flex justify-center mt-4 w-full rounded-lg p-2">
-          <div className='flex justify-center items-center h-auto rounded-lg border-gray-100'>
-            <div style={{ position: 'relative', width: '1090px', height: '300px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
-              {src ? (
-                <Cropper
-                  image={src}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={325 / 150}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-                />
-              ) : (
-                <div className="flex justify-center items-center h-full">
-                  <p className="text-gray-500">No image selected. Please upload an image.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-center items-center mt-4">
-          <div className="flex flex-col items-start mt-2 bg-gray-100 overflow-hidden shadow-md p-6 rounded-xl w-4/5">
-            
-            <div className="flex flex-col w-full">
-              <label className={`input-label ${productName ? 'active' : ''} font-semibold mb-2 text-main-green`}>Product Name</label>
-              <input
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
-              />
-            </div>
-            <div className="flex flex-col w-full">
-              <label className={`input-label ${description ? 'active' : ''} font-semibold mb-2 text-main-green`}>Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
-                rows={4}
-              />
-            </div>
-            <div className="flex flex-col w-1/3">
-              <label className={`input-label font-semibold mb-2 text-main-green`}>Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col w-1/3">
-              <label className={`input-label ${stockStatus ? 'active' : ''} font-semibold mb-2 text-main-green`}>Stock Status</label>
-              <select
-                value={stockStatus}
-                onChange={(e) => setStockStatus(e.target.value)}
-                className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
-              >
-                <option value="In Stock">In Stock</option>
-                <option value="Out of Stock">Out of Stock</option>
-              </select>
-            </div>
-            <div className="flex justify-center items-center mt-10">
-              {variations.map((variation, index) => (
-                <div key={index} className="mb-6">
-                  {/* Temperature input */}
-                  <div className="flex flex-col w-1/2">
-                    <label className={`input-label ${variation.temperature ? 'active' : ''} font-semibold mb-2 text-main-green`}>Temperature (hot/iced)</label>
-                    <input
-                      type="text"
-                      value={variation.temperature}
-                      onChange={(e) => handleVariationChange(index, 'temperature', e.target.value)}
-                      className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+
+        
+
+        {/* Drinks Form */}
+        {productType === 'Drinks' && (
+          <>
+            <div className="flex flex-col justify-center items-center mt-8">
+            <div className="flex-col justify-center mt-4 w-full rounded-lg p-2">
+              <div className='flex justify-center items-center h-auto rounded-lg border-gray-100'>
+                <div style={{ position: 'relative', width: '1090px', height: '300px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
+                  {src ? (
+                    <Cropper
+                      image={src}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={325 / 150}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                      style={{
+                        containerStyle: {
+                          backgroundColor: '#F3F4F6',
+                          borderRadius: '12px',
+                        },
+                        cropAreaStyle: {
+                          border: '2px dashed #F3F4F6',
+                        },
+                      }}
                     />
-                  </div>
-                  {/* Size and price inputs */}
-                  {variation.sizes.map((sizePrice, sizeIndex) => (
-                    <div key={sizeIndex} className="flex mb-2 m-4 w-full items-center self-center">
-                      {/* Size input */}
-                      <div className="flex flex-col w-1/3">
-                        <label className={`input-label ${sizePrice.size ? 'active' : ''} font-semibold mb-2 text-main-green`}>Size</label>
+                  ) : (
+                    <div className="flex justify-center items-center h-full">
+                      <p className="text-gray-500">No image selected. Please upload an image.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-center items-center mt-4 rounded-lg">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    setSrc(null);
+                    onSelectFile(e);
+                  }}
+                  className="py-2 px-4 bg-main-honey rounded-lg text-white text-center items-center"
+                />
+              </div>
+            </div>
+              <div className="flex flex-col place-self-center mt-2 bg-gray-100 overflow-hidden shadow-md p-6 rounded-xl w-[90%] max-w-[1090px]">
+                <div className="flex flex-col w-full">
+                  <label className="font-semibold mb-2 text-main-green">Product Name</label>
+                  <input
+                    type="text"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                  />
+                </div>
+
+                <div className="flex flex-col w-full">
+                  <label className="font-semibold mb-2 text-main-green">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="flex flex-col w-1/3">
+                  <label className="font-semibold mb-2 text-main-green">Category</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                  >
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-start items-center">
+                  <button
+                    onClick={handleAddVariation}
+                    className="py-2 px-4 rounded-md shadow-md bg-main-honey text-white shadow-gray-300 mt-6"
+                  >
+                    Add Variation
+                  </button>
+                </div>
+
+                {variations.map((variation, variationIndex) => (
+                  <div key={variationIndex} className="flex flex-col mt-4">
+                    <div className="flex flex-col w-1/3">
+                      <label className="font-semibold mb-2 text-main-green">Temperature</label>
+                      <select
+                      value={variation.temperature}
+                      onChange={(e) => handleVariationChange(variationIndex, 'temperature', e.target.value)}
+                      className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                    >
+                      <option value="">Select Temperature</option>
+                      <option value="hot">Hot</option>
+                      <option value="iced">Iced</option>
+                    </select>
+                    </div>
+
+                    {variation.sizes.map((sizePrice, sizeIndex) => (
+                      <div key={sizeIndex} className="flex flex-col w-full">
+                        <label className="font-semibold mb-2 text-main-green">Size</label>
                         <input
                           type="text"
                           value={sizePrice.size}
-                          onChange={(e) => handleSizePriceChange(index, sizeIndex, 'size', e.target.value)}
-                          className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300 mr-4"
+                          onChange={(e) => handleSizePriceChange(variationIndex, sizeIndex, 'size', e.target.value)}
+                          className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
                         />
-                      </div>
-                      {/* Price input */}
-                      <div className="flex flex-col w-1/3">
-                        <label className={`input-label ${sizePrice.price ? 'active' : ''} font-semibold mb-2 text-main-green`}>Price</label>
+                        <label className="font-semibold mb-2 text-main-green">Price</label>
                         <input
-                          type="number"
+                          type="text"
                           value={sizePrice.price}
-                          onChange={(e) => handleSizePriceChange(index, sizeIndex, 'price', parseInt(e.target.value))}
+                          onChange={(e) => handleSizePriceChange(variationIndex, sizeIndex, 'price', e.target.value)}
                           className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
                         />
                       </div>
-                    </div>
-                  ))}
-                  {/* Add Size & Price button */}
-                  <div className="flex justify-center">
-                    <button onClick={() => handleAddSizePrice(index)} className="text-white shadow-md shadow-gray-300 bg-main-honey px-3 py-2 rounded-lg mt-6">Add Size & Price</button>
+                    ))}
+
+                    <button
+                      onClick={() => handleAddSizePrice(variationIndex)}
+                      className="py-2 px-4 rounded-md shadow-md bg-main-honey text-white shadow-gray-300 mt-6"
+                    >
+                      Add Size and Price
+                    </button>
+                  </div>
+                ))}
+
+                <div className="flex justify-end items-center mt-6">
+                  <button
+                    onClick={handleCrop}
+                    className="py-2 px-6 rounded-md shadow-md bg-main-green text-white shadow-gray-300"
+                  >
+                    Save Product
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {productType === 'Pastry' && (
+          <>
+            <div className="flex flex-col justify-center items-center mt-8">
+              <div className="flex-col justify-center mt-4 w-full rounded-lg p-2">
+                <div className='flex justify-center items-center h-auto rounded-lg border-gray-100'>
+                  <div style={{ position: 'relative', width: '1090px', height: '300px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
+                    {src ? (
+                      <Cropper
+                        image={src}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={325 / 150}
+                        onCropChange={setCrop}
+                        onCropComplete={onCropComplete}
+                        onZoomChange={setZoom}
+                        style={{
+                          containerStyle: {
+                            backgroundColor: '#F3F4F6',
+                            borderRadius: '12px',
+                          },
+                          cropAreaStyle: {
+                            border: '2px dashed #F3F4F6',
+                          },
+                        }}
+                      />
+                    ) : (
+                      <div className="flex justify-center items-center h-full">
+                        <p className="text-gray-500">No image selected. Please upload an image.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
+                <div className="flex justify-center items-center mt-4 rounded-lg">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      setSrc(null);
+                      onSelectFile(e);
+                    }}
+                    className="py-2 px-4 bg-main-honey rounded-lg text-white text-center items-center"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col place-self-centerr mt-2 bg-gray-100 overflow-hidden shadow-md p-6 rounded-xl w-[90%] max-w-[1090px]">
+                <div className="flex flex-col w-full">
+                  <label className="font-semibold mb-2 text-main-green">Product Name</label>
+                  <input
+                    type="text"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                  />
+                </div>
+
+                <div className="flex flex-col w-full">
+                  <label className="font-semibold mb-2 text-main-green">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="flex flex-col w-1/3">
+                  <label className="font-semibold mb-2 text-main-green">Category</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                  >
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Single Price for Pastry */}
+                <div className="flex flex-col w-1/3">
+                  <label className="font-semibold mb-2 text-main-green">Price</label>
+                  <input
+                    type="text"
+                    value={variations[0]?.price || ''}
+                    onChange={(e) => setVariations([{ price: e.target.value }])}
+                    className="py-2 px-4 rounded-md mb-2 shadow-md bg-white shadow-gray-300"
+                  />
+                </div>
+
+                <div className="flex justify-end items-center mt-6">
+                  <button
+                    onClick={handleCrop}
+                    className="py-2 px-6 rounded-md shadow-md bg-main-green text-white shadow-gray-300"
+                  >
+                    Save Product
+                  </button>
+                </div>
+              </div>
             </div>
-            
-            <button onClick={handleAddVariation} className="text-white bg-blue-400 px-3 py-2 shadow-gray-400 shadow-md rounded-lg self-center">Add Variation</button>
-            
-            <div className="flex justify-center items-center self-center mt-4">
-              <button onClick={handleCrop} className="bg-emerald-400 text-white py-2 px-4 shadow-gray-400 rounded-lg shadow-md">Add Product</button>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
+
       </div>
     </div>
   );

@@ -79,7 +79,7 @@ const AddCategory = () => {
       <div className="p-7">
         <h1 className="text-6xl text-black text-center mt-2 font-bold">Add Category
         </h1>
-        <h3 className="text-lg md:text-base text-white text-center mt-4 md:mt-8 font-semibold bg-main-green">
+        <h3 className="text-lg md:text-base text-white text-center mt-4 md:mt-8 font-semibold rounded-lg bg-main-green">
           MAKE SURE CATEGORY ID IS UNIQUE
         </h3>
 

@@ -212,7 +212,7 @@ const Overallsale = () => {
           ENJOY BROWSING
         </h3>
         <div className="flex justify-center mb-4 bg-main-green p-2 w-fit mx-auto rounded-lg">
-          <label htmlFor="months" className="mr-2 mt-2 text-white font-bold">Select a month:</label>
+          <label htmlFor="months" className="mr-2 mt-2 text-white font-bold">MONTH: </label>
           <select
             value={selectedMonth}
             onChange={handleMonthChange}
@@ -249,50 +249,57 @@ const Overallsale = () => {
             <div className="relative bg-white bg-opacity-85 p-4 rounded-lg shadow">
               {chartData && (
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4">Total Sales</h2>
+                  <h2 className="text-2xl font-bold mb-4">Total Sales</h2>
 
-                  <h3 className="text-lg mb-2">Start Date: {firstDayOfWeek ? firstDayOfWeek.toString() : null}</h3>
-                  <h3 className="text-lg mb-4">End Date: {lastDayOfWeek ? lastDayOfWeek.toString() : null}</h3>
+                  <h3 className="text-mb mb-2">Start Date: {firstDayOfWeek ? firstDayOfWeek.toString() : null}</h3>
+                  <h3 className="text-mb mb-4">End Date: {lastDayOfWeek ? lastDayOfWeek.toString() : null}</h3>
                   <Bar options={options} data={{ ...chartData, datasets: [chartData.datasets[0]] }} />
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     {chartData.labels.map((label, index) => (
                       <div key={index} className="bg-light-green p-4 rounded-lg shadow">
-                        <h3 className="text-lg font-semibold mb-2 text-white">{label}</h3>
+                        <h3 className="text-lg font-bold mb-2 text-white">{label}</h3>
                         <p className='text-sm text-white'>Total Sales: &#8369;{chartData.datasets[0].data[index].toFixed(2)}</p>
                       </div>
                     ))}
                   </div>
                   <div className="mt-4">
-                    <div className="bg-red-200 p-4 rounded-lg shadow">
-                      <p className="text-lg font-semibold">Total Sales for {selectedMonth} - {selectedWeek}</p>
-                      <p className="text-sm">&#8369;{totalSalesForWeek.toFixed(2)}</p>
+                    <div className="bg-[rgba(255,99,132,0.5)] p-4 rounded-lg shadow justify-between flex">
+                      <p className="text-lg font-bold">Total Sales for {selectedMonth} - {selectedWeek}:</p>
+                      <p className="text-lg font-semibold">&#8369;{totalSalesForWeek.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
               )}
               {chartData && (
                 <div className="mt-8">
-                  <h2 className="text-2xl font-semibold mb-4">Quantity Sold and Number of Customers</h2>
+                  <h2 className="text-2xl font-bold mb-4">Quantity Sold and Number of Customers</h2>
                   <Bar options={options} data={{ ...chartData, datasets: [chartData.datasets[1], chartData.datasets[2]] }} />
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     {chartData.labels.map((label, index) => (
-                      <div key={index} className="bg-light-green p-4 rounded-lg shadow">
-                        <h3 className="text-lg font-semibold mb-2 text-white">{label}</h3>
-                        <p className='text-sm text-white'>Quantity Sold: {chartData.datasets[1].data[index]}</p>
-                        <p className='text-sm text-white'>Number of Customers: {chartData.datasets[2].data[index]}</p>
+                      <div key={index} className="bg-light-green p-4 rounded-lg shadow-md">
+                        <h3 className="text-lg font-bold mb-2 text-white">{label}</h3>
+                        <div className='justify-between flex'>
+                          <p className='text-sm text-white'>Quantity Sold: </p>
+                          <p className='text-sm text-white'>{chartData.datasets[1].data[index]}</p>
+                        </div>
+                        <div className='justify-between flex'>
+                          <p className='text-sm text-white'>Number of Customers: </p>
+                          <p className='text-sm text-white'>{chartData.datasets[2].data[index]}</p>
+                        </div>
+                        
                       </div>
                     ))}
                   </div>
                   <div className="mt-4">
-                    <div className="bg-light-honey p-4 rounded-lg shadow">
-                      <p className="text-lg font-thin">Total Quantity Sold for {selectedMonth} - {selectedWeek}</p>
-                      <p className="text-sm font-black">{totalQuantitySold}</p>
+                    <div className="bg-[rgba(53,162,235,0.5)] p-4 rounded-lg shadow justify-between flex">
+                      <p className="text-lg font-bold">Total Quantity Sold for {selectedMonth} - {selectedWeek}:</p>
+                      <p className="text-lg font-semibold">{totalQuantitySold}</p>
                     </div>
                   </div>
                   <div className="mt-4">
-                    <div className="bg-purple-200 p-4 rounded-lg shadow">
-                      <p className="text-lg font-thin">Total Customers for {selectedMonth} - {selectedWeek}</p>
-                      <p className="text-sm font-black">{totalCustomers}</p>
+                    <div className="bg-[rgba(75,192,192,0.5)] p-4 rounded-lg shadow justify-between flex">
+                      <p className="text-lg font-bold">Total Customers for {selectedMonth} - {selectedWeek}:</p>
+                      <p className="text-lg font-semibold">{totalCustomers}</p>
                     </div>
                   </div>
                 </div>

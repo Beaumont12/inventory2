@@ -3,34 +3,32 @@ import { FaEnvelope, FaLock } from 'react-icons/fa';
 import bgImage from '../src/assets/images/winzenbg.png';
 import { db, ref, get, child } from "../firebaseConfig";
 import Sidebar from './Sidebar';
-import ReCAPTCHA from 'react-google-recaptcha'; 
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for routing
+import Home from './components/Home';
 
 const App = () => {
   const [staffId, setStaffId] = useState("");
   const [password, setPassword] = useState(""); 
   const [error, setError] = useState(""); 
-  const [isLoggedIn, setIsLoggedIn] = useState(false); 
-  const [captchaValue, setCaptchaValue] = useState(null);
-
-  const checkLoginStatus = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const loggedInUser = localStorage.getItem("isLoggedIn");
-    setIsLoggedIn(loggedInUser === "true");
-  };
+    return loggedInUser === "true"; // Initialize state based on local storage
+  }); 
+  const [captchaValue, setCaptchaValue] = useState(null);
+  const navigate = useNavigate(); // Initialize the navigate function
 
   useEffect(() => {
-    checkLoginStatus(); 
-  }, []);
-
-  useEffect(() => {
+    // Use the useEffect hook to listen for changes to the local storage.
     const handleStorageChange = () => {
-      checkLoginStatus();
+      const loggedInUser = localStorage.getItem("isLoggedIn");
+      setIsLoggedIn(loggedInUser === "true");
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [isLoggedIn]); 
+  }, []); // Removed isLoggedIn from dependency array
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -39,19 +37,19 @@ const App = () => {
     try {
       const dbRef = ref(db); 
       const snapshot = await get(child(dbRef, "staffs")); 
-  
+
       if (snapshot.exists()) {
         const staffs = snapshot.val();
         const staff = staffs[staffId]; 
-  
+
         if (staff) {
           if (staff.Password === password) {
             // Check if the role is Admin or Super Admin
             if (staff.Role === "Admin" || staff.Role === "Super Admin") {
               alert(`Welcome back, ${staff.Name}!`);
-              setIsLoggedIn(true);
-              
-              // Save the role and staff ID to local storage
+              setIsLoggedIn(true); // Update the state
+
+              // Save user data to local storage
               const userData = {
                 staffId: staffId,
                 role: staff.Role,
@@ -63,12 +61,10 @@ const App = () => {
                 password: staff.Password,
               };
               localStorage.setItem("userData", JSON.stringify(userData));
-  
-              localStorage.setItem("isLoggedIn", "true");
-              checkLoginStatus();
-              console.log("userData", userData);
-  
-              navigate("/home");
+              localStorage.setItem("isLoggedIn", "true"); // Save logged-in state to local storage
+
+              // Navigate to home page
+              navigate("/home"); // Ensure this is set up correctly in your routing
             } else {
               setError("Access restricted to Admin and Super Admin only.");
             }
@@ -84,7 +80,7 @@ const App = () => {
     } catch (error) {
       setError("Error fetching staff data. Please try again later.");
     }
-};
+  };
 
   return (
     <div className="flex">

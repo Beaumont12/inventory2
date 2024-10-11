@@ -43,10 +43,13 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
     }, []);
 
     useEffect(() => {
-        if (isLoggedIn) {
+        console.log("isLoggedIn:", isLoggedIn);
+        console.log("Current Path:", location.pathname);
+        if (isLoggedIn && location.pathname !== "/home") {
+            console.log("Navigating to /home");
             navigate("/home");
         }
-    }, [isLoggedIn, navigate]);
+    }, [isLoggedIn, location, navigate]);    
 
     const handleLogout = () => {
         localStorage.removeItem("isLoggedIn"); 
@@ -69,9 +72,9 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
             path: "/stocks",
             icon: <BsBox2Fill />,
             submenuItems: [
-                { title: "Submenu 1", path: "/submenu1", roles: ["Admin", "Super Admin"] }, 
-                { title: "Submenu 2", path: "/submenu2", roles: ["Admin", "Super Admin"] }, 
-                { title: "Submenu 3", path: "/submenu3", roles: ["Admin", "Super Admin"] },
+                { title: "Ingredients", path: "/submenu1", roles: ["Admin", "Super Admin"] }, 
+                { title: "Utensils", path: "/submenu2", roles: ["Admin", "Super Admin"] }, 
+                { title: "Extrernal", path: "/submenu3", roles: ["Admin", "Super Admin"] },
                 { title: "Submenu 4", path: "/submenu4", roles: ["Admin", "Super Admin"] },
             ], roles: ["Admin", "Super Admin"]
         },
@@ -79,7 +82,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
         { title: "Sales Report", path: "/sales-report", icon: <IoMdAnalytics />, roles: ["Admin", "Super Admin"] },
         { title: "Manage Users", path: "/manage-users", spacing: true, icon: <FaUsers />, roles: ["Super Admin"] },
         { title: "Add Users", path: "/add-users", icon: <FaUserPlus />, roles: ["Super Admin"] },
-        { title: "Logout", path: "/logout", spacing: true, icon: <AiOutlineLogout />, onClick: handleLogout, roles: ["Admin", "Super Admin"] },
+        { title: "Logout", path: "/", spacing: true, icon: <AiOutlineLogout />, onClick: handleLogout, roles: ["Admin", "Super Admin"] },
     ];
 
     const filteredMenus = Menus.filter(menu => !menu.roles || menu.roles.includes(role));

@@ -134,7 +134,7 @@ const Managecategory = () => {
     <div className="flex-1 bg-white bg-cover bg-center bg-no-repeat h-screen">
       <div className="p-7">
         <h1 className="text-6xl text-center text-black font-bold mt-2">Manage Category</h1>
-        <h3 className="text-lg md:text-base text-center text-white mt-4 md:mt-8 font-semibold bg-main-green">EDIT ONLY WHEN NECESSARY</h3>
+        <h3 className="text-lg md:text-base text-center rounded-lg text-white mt-4 md:mt-8 font-semibold bg-main-green">EDIT ONLY WHEN NECESSARY</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
           {categories.map(category => (
             <div key={category.id} className="bg-gray-100 border border-gray-100 rounded-xl p-4 flex flex-col justify-center items-center text-center shadow-lg">

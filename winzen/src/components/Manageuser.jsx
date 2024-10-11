@@ -184,21 +184,19 @@ const Manageuser = () => {
       <div className="flex-1 bg-white">
         <div className="p-7">
           <h1 className="text-6xl text-center mt-2 font-bold">Manage Users</h1>
-          <h3 className="text-lg md:text-base text-center text-white mt-4 md:mt-8 font-semibold bg-main-green">EDIT ONLY WHEN NECESSARY</h3>
+          <h3 className="text-lg md:text-base text-center text-white mt-4 md:mt-8 rounded-lg font-semibold bg-main-green">EDIT ONLY WHEN NECESSARY</h3>
           {/* Search bar */}
-          <hr className="my-4 border-gray-500 border-2" />
-          <div className="relative mb-4">
+          <div className="relative mb-4 mt-4">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             placeholder="Search user by name"
             value={searchQuery}
             onChange={(e)=> setSearchQuery(e.target.value)}
-            className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
+            className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded-lg shadow-md py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
           />
         </div>
-          <hr className="my-4 border-gray-500 border-2" />
-          <div className="grid grid-cols-1 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-4 border border-gray-100 rounded-md shadow-md bg-main-green">
+          <div className="grid grid-cols-1 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 border border-gray-100 rounded-lg shadow-md bg-main-green">
             {loading ? (
               <p>Loading...</p>
             ) : (

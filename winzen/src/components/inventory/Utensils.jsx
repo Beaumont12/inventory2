@@ -190,10 +190,9 @@ const Utensils = () => {
       <div className="p-7">
         {renderAlert()}
         <h1 className="text-6xl text-center mt-2 font-bold text-black">Utensils Inventory</h1>
-        <h3 className="text-lg md:text-base bg-main-green text-white mb-4 text-center mt-4 md:mt-8 font-semibold">
+        <h3 className="text-lg md:text-base bg-main-green rounded-lg text-white mb-4 text-center mt-4 md:mt-8 font-semibold">
           ENJOY BROWSING
         </h3>
-        <hr className="my-4 border-gray-500 border-2" />
         <div className="relative mb-4">
           <input
             type="text"
@@ -206,8 +205,7 @@ const Utensils = () => {
             <FaSearch />
           </div>
         </div>
-        <hr className="my-4 border-gray-500 border-2" />
-        <table className="min-w-full bg-[#DDB04B] border border-gray-200 shadow-md mt-4 rounded-lg overflow-hidden">
+        <table className="min-w-full bg-[#DDB04B] border border-gray-200 shadow-md mt-8 rounded-lg overflow-hidden">
           <thead>
             <tr>
               <td colSpan="2" className="text-white text-left p-4">
@@ -216,7 +214,7 @@ const Utensils = () => {
               <td colSpan="2" className="text-right p-4">
                 <button 
                 onClick={handleOpenModal} 
-                className="bg-main-green hover:bg-light-green text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2"
+                className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2"
                 >+ Add Utensil Stock</button>
 
                 <button 
@@ -269,10 +267,9 @@ const Utensils = () => {
         </table>
 
         {isModalOpen && (
-          <div className="fixed top-0 right-0 w-1/2 h-full bg-[#F9F9F9] shadow-lg z-50 opacity-95">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Add or Update Item</h2>
-
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white p-5 rounded-3xl shadow-md">
+              <h2 className="text-xl font-bold mb-8 text-main-honey text-center">Add or Update Item</h2>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2">Stock Type</label>
                 <select
@@ -338,20 +335,14 @@ const Utensils = () => {
                   onChange={(e) => setNewUtensilQuantity(e.target.value)}
                 />
               </div>
-
-              <button
-                onClick={handleSaveNewItem}
-                className="bg-teal-600 hover:bg-teal-800 text-white py-2 px-4 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-[#DDB04B] transition-shadow mr-2"
-              >
+              <div className='flex items-center justify-center mt-6'>
+                <button onClick={handleSaveNewItem} className="bg-teal-600 hover:bg-teal-800 text-white py-2 px-4 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-[#DDB04B] transition-shadow mr-2">
                 {updateMode ? 'Update' : 'Save'}
-              </button>
-
-              <button
-                onClick={handleCloseModal}
-                className="mt-4 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-[#DDB04B] transition-shadow"
-              >
-                Close
-              </button>
+                </button>
+                <button onClick={handleCloseModal} className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-[#DDB04B] transition-shadow">
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

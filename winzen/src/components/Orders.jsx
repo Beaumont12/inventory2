@@ -96,7 +96,7 @@ const Orders = () => {
     <div className="flex-grow items-center justify-center bg-white" style={{ scrollBehavior: 'smooth'}}>
       <div className="p-7">
         <h1 className="text-4xl md:text-6xl text-center font-bold text-black mt-2">Ongoing Orders</h1>
-        <h3 className="text-lg md:text-base text-center mt-4 md:mt-8 font-semibold bg-main-green text-white">PLEASE MAKE SURE TO DOUBLE CHECK</h3>
+        <h3 className="text-lg md:text-base text-center mt-4 md:mt-8 font-semibold rounded-lg bg-main-green text-white">PLEASE MAKE SURE TO DOUBLE CHECK</h3>
         <div className="flex justify-start mb-4 mt-5">
           {/* Toggle buttons for filtering orders */}
           <button

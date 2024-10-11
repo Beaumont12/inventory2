@@ -62,7 +62,7 @@ const History = () => {
   const totalAmount = filteredHistoryData.reduce((total, history) => total + parseFloat(history.total), 0);
 
   const months = [
-    { value: '', label: 'All Months' },
+    { value: '', label: 'OVERALL' },
     { value: 'Jan', label: 'January' },
     { value: 'Feb', label: 'February' },
     { value: 'Mar', label: 'March' },
@@ -208,7 +208,7 @@ const History = () => {
             <select
               value={selectedMonth}
               onChange={handleMonthChange}
-              className="appearance-none bg-main-honey text-light-green font-semibold border border-gray-200 rounded-lg py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4"
+              className="appearance-none bg-main-honey text-light-green text-center font-bold border border-gray-200 rounded-lg py-3 px-2 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4"
             >
               {months.map((month) => (
                 <option key={month.value} value={month.value}>{month.label}</option>
@@ -216,7 +216,7 @@ const History = () => {
             </select>
           </div>
             <div className="bg-main-green rounded-lg p-4 shadow-lg mt-4">
-              <h2 className="text-xl font-semibold mb-2 text-white">Total Transactions</h2>
+              <h2 className="text-xl font-bold mb-2 text-white">Total Transactions</h2>
               <p className='text-white'>Total Quantity: {totalQuantity}</p>
               <p className='text-white'>Total Amount: &#8369;{totalAmount.toFixed(2)}</p>
             </div>
