@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getDatabase, ref, onValue, set, remove } from 'firebase/database';
+import { getDatabase, ref, onValue, set, remove, get, push } from 'firebase/database';
 import { initializeApp } from 'firebase/app';
 import { FaSearch } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,6 +16,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 const Utensils = () => {
   const [utensils, setUtensils] = useState([]);
@@ -61,45 +62,105 @@ const Utensils = () => {
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleSaveNewItem = () => {
+  const logStockHistory = async (itemName, action, quantityChange) => {
+    const historyRef = ref(db, 'stocksHistory');
+
+    const currentDate = new Date();
+    const localDate = new Date(currentDate.getTime() - currentDate.getTimezoneOffset() * 60000);
+    const formattedDate = localDate.toISOString().split('T')[0];
+
+    const newEntry = {
+        Date: formattedDate,
+        ItemName: itemName,
+        Actions: action,
+        Quantity: quantityChange,
+    };
+
+    try {
+        await push(historyRef, newEntry);
+        console.log(`Logged: ${action} ${quantityChange} of ${itemName} on ${currentDate}`);
+    } catch (error) {
+        console.error("Error logging stock history: ", error);
+    }
+  };
+
+  const handleSaveNewItem = async () => {
     const db = getDatabase(app);
-  
+
+    console.log('handleSaveNewItem called');
+    
     if (productType === "New Product" && newUtensilName.trim() === '') {
-      window.alert('Please enter a utensil name.');
-      return;
+        console.log('No utensil name provided for new product.');
+        window.alert('Please enter a utensil name.');
+        return;
     }
   
     if (productType === "New Product") {
-      const utensilId = `util${utensils.length + 1}`;
-      const newUtensilData = {
-        name: newUtensilName,
-        stocks: newUtensilQuantity,
-      };
+        console.log('Adding a new product.');
   
-      set(ref(db, `stocks/Utensils/${utensilId}`), newUtensilData)
-        .then(() => {
-          window.alert('New utensil added successfully!');
-          resetModal();
-        })
-        .catch((error) => {
-          console.error('Error saving new item:', error);
-        });
-    } else {
-      if (productType === "Old Product" && newUtensilName) {
-        const utensil = utensils.find(u => u.name === newUtensilName);
-        if (utensil) {
-          const updatedStock = parseInt(utensil.stocks) + parseInt(newUtensilQuantity);
+        const utensilCountRef = ref(db, 'stocks/Utensils/utilCount');
+        console.log('Fetching current utilCount...');
   
-          set(ref(db, `stocks/Utensils/${utensil.id}/stocks`), updatedStock)
-            .then(() => {
-              window.alert('Stock updated successfully!');
-              resetModal();
-            })
-            .catch((error) => {
-              console.error('Error updating stock:', error);
-            });
+        try {
+            const snapshot = await get(utensilCountRef);
+            let utilCount = 1; // Default to 1 if no utilCount is found
+            console.log('Snapshot exists:', snapshot.exists());
+  
+            if (snapshot.exists()) {
+                utilCount = snapshot.val(); // Get the existing count
+                console.log('Current utilCount:', utilCount);
+            }
+  
+            const utensilId = `util${utilCount}`;
+            console.log('Generated utensilId:', utensilId);
+  
+            const newUtensilData = {
+                name: newUtensilName,
+                stocks: newUtensilQuantity,
+            };
+  
+            console.log('New utensil data:', newUtensilData);
+  
+            // Save the new utensil data
+            await set(ref(db, `stocks/Utensils/${utensilId}`), newUtensilData);
+            console.log('New utensil added successfully.');
+  
+            // Log the addition action
+            await logStockHistory(newUtensilName, 'Added', parseInt(newUtensilQuantity));
+  
+            // Increment the utilCount after adding the new item
+            console.log('Incrementing utilCount to:', utilCount + 1);
+            await set(utensilCountRef, utilCount + 1);
+  
+            console.log('utilCount updated successfully.');
+            window.alert('New utensil added successfully!');
+            resetModal();
+        } catch (error) {
+            console.error('Error saving new item:', error);
         }
-      }
+    } else {
+        if (productType === "Old Product" && newUtensilName) {
+            console.log('Updating stock for an existing product.');
+  
+            const utensil = utensils.find(u => u.name === newUtensilName);
+            console.log('Found utensil:', utensil);
+  
+            if (utensil) {
+                const updatedStock = parseInt(utensil.stocks) + parseInt(newUtensilQuantity);
+                console.log('Updated stock:', updatedStock);
+  
+                await set(ref(db, `stocks/Utensils/${utensil.id}/stocks`), updatedStock);
+                console.log('Stock updated successfully.');
+  
+                // Log the stock update action
+                await logStockHistory(utensil.name, 'Restocked', parseInt(newUtensilQuantity));
+  
+                window.alert('Stock updated successfully!');
+                resetModal();
+            } else {
+                console.log('Utensil not found.');
+            }
+        }
     }
   };  
 
@@ -124,14 +185,22 @@ const Utensils = () => {
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (window.confirm("Are you sure you want to delete the selected items?")) {
-      const db = getDatabase(app);
-      itemsToDelete.forEach(itemId => {
-        remove(ref(db, `stocks/Utensils/${itemId}`));
-      });
-      setItemsToDelete([]);
-      window.alert("Selected items have been deleted.");
+        const db = getDatabase(app);
+        for (const itemId of itemsToDelete) {
+            const utensilRef = ref(db, `stocks/Utensils/${itemId}`);
+            const snapshot = await get(utensilRef);
+            if (snapshot.exists()) {
+                const utensil = snapshot.val();
+                await remove(utensilRef);
+                // Log the deletion action
+                await logStockHistory(utensil.name, 'Removed', -parseInt(utensil.stocks));
+                console.log(`Deleted utensil: ${utensil.name}`);
+            }
+        }
+        setItemsToDelete([]);
+        window.alert("Selected items have been deleted.");
     }
   };
 

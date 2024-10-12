@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaPencilAlt, FaTrash } from 'react-icons/fa'; 
-import { remove, ref, onValue, update } from "firebase/database";
+import { getDatabase, remove, ref, onValue, update, get, push } from "firebase/database";
 import { db } from '../../../firebaseConfig';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -47,11 +47,47 @@ const Ingredients = () => {
     }
   };
 
-  const handleDecrementStock = (key, currentStock) => {
+  const logStockHistory = async (itemName, action, quantityChange) => {
+    const historyRef = ref(db, 'stocksHistory'); // Use the db instance imported from your config
+
+    const currentDate = new Date();
+    const localDate = new Date(currentDate.getTime() - currentDate.getTimezoneOffset() * 60000);
+    const formattedDate = localDate.toISOString().split('T')[0];
+
+    const newEntry = {
+        Date: formattedDate,
+        ItemName: itemName,
+        Actions: action,
+        Quantity: quantityChange,
+    };
+
+    try {
+        await push(historyRef, newEntry); // Push the new entry to the stocksHistory node
+        console.log(`Logged: ${action} ${quantityChange} of ${itemName} on ${currentDate}`); // Log the action
+    } catch (error) {
+        console.error("Error logging stock history: ", error); // Log error if pushing fails
+    }
+  };
+
+  const handleDecrementStock = async (key, currentStock) => { // Added async here
     const newStock = currentStock > 0 ? currentStock - 1 : 0;
     const updates = {};
     updates[`stocks/Ingredients/Curve/${key}/stocks`] = newStock;
-    update(ref(db), updates);
+
+    try {
+        // Retrieve the ingredient name from the ingredients state or database
+        const ingredientName = ingredients[key]?.name; // Assuming ingredients is your state containing the ingredient data
+
+        // Update the stock in the database
+        await update(ref(db), updates); 
+        
+        // Log the stock history using the ingredient's name
+        await logStockHistory(ingredientName, 'Decreased', -1); 
+
+        console.log(`Decremented stock of ${ingredientName} to ${newStock}`);
+    } catch (error) {
+        console.error("Error decrementing stock: ", error);
+    }
   };
 
   const handleToggleDeleteMode = () => {
@@ -59,21 +95,33 @@ const Ingredients = () => {
     setItemsToDelete([]); 
   };
 
-  const handleDeleteIngredient = (key) => {
+  const handleDeleteIngredient = async (key) => { // Added async here
     const isConfirmed = window.confirm("Are you sure you want to delete this ingredient?");
-  
+
     if (isConfirmed) {
-      const ingredientRef = ref(db, `stocks/Ingredients/Curve/${key}`);
-      
-      remove(ingredientRef).then(() => {
-        setIngredients((prevIngredients) => {
-          const updatedIngredients = { ...prevIngredients };
-          delete updatedIngredients[key]; 
-          return updatedIngredients;
-        });
-      }).catch((error) => {
-        console.error("Error deleting ingredient: ", error);
-      });
+        const ingredientRef = ref(db, `stocks/Ingredients/Curve/${key}`);
+
+        try {
+            const snapshot = await get(ingredientRef); // Await here
+            if (snapshot.exists()) {
+                const ingredient = snapshot.val();
+                const currentStock = ingredient.stocks; // Get the current stock for logging
+
+                await remove(ingredientRef); 
+                await logStockHistory(ingredient.name, 'Removed', -currentStock);
+                console.log(`Logged removal of ${ingredient.name} with quantity ${-currentStock}`); // Log history entry
+
+                setIngredients((prevIngredients) => {
+                    const updatedIngredients = { ...prevIngredients };
+                    delete updatedIngredients[key];
+                    return updatedIngredients;
+                });
+            } else {
+                console.error("Ingredient not found for deletion.");
+            }
+        } catch (error) {
+            console.error("Error fetching ingredient for deletion: ", error);
+        }
     }
   };  
 
@@ -88,31 +136,37 @@ const Ingredients = () => {
     setIsModalOpen(true);
   };
 
-  const handleUpdateIngredient = () => {
+  const handleUpdateIngredient = async () => { // Added async here
     if (!selectedIngredient) return;
-  
+
     const confirmed = window.confirm(
-      `Are you sure you want to add ${addStock} to ${selectedIngredient.name}'s stock?`
+        `Are you sure you want to add ${addStock} to ${selectedIngredient.name}'s stock?`
     );
-    
+
     if (!confirmed) return; // If the user cancels, exit the function
-  
+
     const updates = {
-      stocks: selectedIngredient.stocks + parseInt(addStock, 10), // Update the stock with added value
+        stocks: selectedIngredient.stocks + parseInt(addStock, 10), // Update the stock with added value
     };
-  
-    update(ref(db, `stocks/Ingredients/Curve/${selectedIngredient.id}`), updates).then(() => {
-      setIngredients((prevIngredients) => ({
-        ...prevIngredients,
-        [selectedIngredient.id]: {
-          ...prevIngredients[selectedIngredient.id],
-          ...updates,
-        },
-      }));
-      setIsModalOpen(false); 
-      setSelectedIngredient(null);
-      setAddStock(0); 
-    });
+
+    try {
+        await update(ref(db, `stocks/Ingredients/Curve/${selectedIngredient.id}`), updates); // Await here
+        await logStockHistory(selectedIngredient.name, 'Restocked', +(parseInt(addStock, 10)));
+        console.log(`Logged restock of ${selectedIngredient.name} with quantity ${+parseInt(addStock, 10)}`); // Log history entry
+
+        setIngredients((prevIngredients) => ({
+            ...prevIngredients,
+            [selectedIngredient.id]: {
+                ...prevIngredients[selectedIngredient.id],
+                ...updates,
+            },
+        }));
+        setIsModalOpen(false);
+        setSelectedIngredient(null);
+        setAddStock(0);
+    } catch (error) {
+        console.error("Error updating ingredient: ", error);
+    }
   }; 
   
   const openAddModal = () => setIsAddModalOpen(true);
@@ -123,35 +177,39 @@ const Ingredients = () => {
     setNewIngredientStock('');
   };
   
-  const handleAddNewIngredient = () => {
+  const handleAddNewIngredient = async () => { // Added async here
     if (!newIngredientName || !newIngredientStocks) {
-      alert("Please fill in both the ingredient name and stock.");
-      return;
+        alert("Please fill in both the ingredient name and stock.");
+        return;
     }
 
     const newIngredientId = `Curve_${curveCount + 1}`;
 
     const newIngredient = {
-      name: newIngredientName,
-      stocks: parseInt(newIngredientStocks, 10),
+        name: newIngredientName,
+        stocks: parseInt(newIngredientStocks, 10),
     };
- 
+
     const updates = {};
     updates[`stocks/Ingredients/Curve/${newIngredientId}`] = newIngredient;
-    updates[`stocks/Ingredients/curveCount`] = curveCount + 1;  
+    updates[`stocks/Ingredients/curveCount`] = curveCount + 1;
 
-    update(ref(db), updates).then(() => {
-      setIngredients((prevIngredients) => ({
-        ...prevIngredients,
-        [newIngredientId]: newIngredient,
-      }));
+    try {
+        await update(ref(db), updates);
+        await logStockHistory(newIngredient.name, 'Added', +(newIngredient.stocks));
+        console.log(`Logged addition of ${newIngredient.name} with quantity ${+newIngredient.stocks}`); // Log history entry
 
-      setIsAddModalOpen(false); 
-      setNewIngredientName('');
-      setNewIngredientStocks(0);
-    }).catch((error) => {
-      console.error("Error updating the database: ", error);
-    });
+        setIngredients((prevIngredients) => ({
+            ...prevIngredients,
+            [newIngredientId]: newIngredient,
+        }));
+
+        setIsAddModalOpen(false);
+        setNewIngredientName('');
+        setNewIngredientStocks(0);
+    } catch (error) {
+        console.error("Error updating the database: ", error);
+    }
   };
 
   const [alert, setAlert] = useState({ message: '', type: '', isVisible: false });
@@ -229,7 +287,7 @@ const Ingredients = () => {
                 <span className="text-xl font-bold">Curve</span>
               </td>
               <td colSpan='3' className="text-end p-4">
-                <button onClick={openAddModal} className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2"> Add New Stock
+                <button onClick={openAddModal} className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2">+ Add New Item
                 </button>
                 <button onClick={handleToggleDeleteMode} className={`bg-${deleteMode ? 'red-700' : 'red-700'} hover:bg-${deleteMode ? 'red-600' : '[#ff4d4f]'} text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors`}>
                   {deleteMode ? 'Cancel' : 'Delete'}

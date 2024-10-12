@@ -23,6 +23,7 @@ import Inventory from './components/inventory/Inventory';
 import Manageuser from './components/Manageuser';
 import Adduser from './components/Adduser';
 import App from './App';
+import External from './components/inventory/External';
 
 const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
     const [open, setOpen] = useState(false);
@@ -74,8 +75,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
             submenuItems: [
                 { title: "Ingredients", path: "/submenu1", roles: ["Admin", "Super Admin"] }, 
                 { title: "Utensils", path: "/submenu2", roles: ["Admin", "Super Admin"] }, 
-                { title: "Extrernal", path: "/submenu3", roles: ["Admin", "Super Admin"] },
-                { title: "Submenu 4", path: "/submenu4", roles: ["Admin", "Super Admin"] },
+                { title: "External", path: "/submenu3", roles: ["Admin", "Super Admin"] },
             ], roles: ["Admin", "Super Admin"]
         },
         { title: "Transactions", path: "/transactions", spacing: true, icon: <FaHistory />, roles: ["Admin", "Super Admin"] },
@@ -188,7 +188,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
                     <Route path="/stocks" element={<Inventory />} />
                     <Route path="/submenu1" element={<Ingredients />} />
                     <Route path="/submenu2" element={<Utensils />} />
-                    <Route path="/submenu3" element={<div>Submenu 3 Page</div>} />
+                    <Route path="/submenu3" element={<External/>} />
                     <Route path="/submenu4" element={<div>Submenu 4 Page</div>} />
                     <Route path="/transactions" element={<History />} />
                     <Route path="/sales-report" element={<Overallsale />} />
