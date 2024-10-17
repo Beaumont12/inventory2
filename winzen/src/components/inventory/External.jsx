@@ -353,69 +353,80 @@ const External = () => {
             ))}
             </div>
             <table className="min-w-full bg-main-honey border border-gray-200 shadow-md mt-8 rounded-lg overflow-hidden">
-                <thead>
-                    <tr className='w-full'>
-                        <td colSpan='3' className="text-white text-left p-4">
-                            <span className="text-xl font-bold">External Items</span>
-                        </td>
-                        <td colSpan='3' className="text-end p-4">
-                            <button onClick={openAddModal} className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2">+ Add New Item </button>
-                            <button onClick={handleToggleDeleteMode} className={`bg-${deleteMode ? 'red-700' : 'red-700'} hover:bg-${deleteMode ? 'red-600' : '[#ff4d4f]'} text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors`}>{deleteMode ? 'Cancel' : 'Delete'} </button>
-                        </td>
-                    </tr>
-                    <tr className="bg-[#DDB04B] text-white">
-                        <th className="py-3 px-6 text-center">Item ID</th>
-                        <th className="py-3 px-6 text-center">Name</th>
-                        {activeCategory === 'Cakes' && filteredIngredients.length > 0 && (
-                            <>
-                            <th className="py-3 px-6 text-center">Slice</th>
-                            <th className="py-3 px-6 text-center">Whole</th>
-                            </>
-                        )}
-                        {activeCategory !== 'Cakes' && (
-                            <>
-                            <th className="py-3 px-6 text-center">Stocks</th>
-                            </>
-                        )}
-                        <th className="py-3 px-6 text-center">Stock Status</th>
-                        <th className="py-3 px-6 text-center">Actions</th>
-                    </tr>
-                </thead>
+            <thead>
+                <tr className="w-full">
+                <td colSpan="3" className="text-white text-left p-4">
+                    <span className="text-xl font-bold">External Items</span>
+                </td>
+                <td colSpan="3" className="text-end p-4">
+                    <button onClick={openAddModal} className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2">+ Add New Item</button>
+                    <button onClick={handleToggleDeleteMode} className={`bg-${deleteMode ? 'red-700' : 'red-700'} hover:bg-${deleteMode ? 'red-600' : '[#ff4d4f]'} text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors`}>
+                    {deleteMode ? 'Cancel' : 'Delete'}
+                    </button>
+                </td>
+                </tr>
+                <tr className="bg-[#DDB04B] text-white">
+                <th className="py-3 px-6 text-center">Item ID</th>
+                <th className="py-3 px-6 text-center">Name</th>
+                {activeCategory === 'Cakes' && filteredIngredients.length > 0 && (
+                    <>
+                    <th className="py-3 px-6 text-center">Slice</th>
+                    <th className="py-3 px-6 text-center">Whole</th>
+                    </>
+                )}
+                {activeCategory !== 'Cakes' && (
+                    <th className="py-3 px-6 text-center">Stocks</th>
+                )}
+                <th className="py-3 px-6 text-center">Stock Status</th>
+                <th className="py-3 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
             <tbody>
-            {filteredIngredients.map(([key, ingredient], index) => {
-                const category = activeCategory;
-                const { status, color } = getStockStatus(ingredient.stocks || { slice: 0, whole: 0 });
-                const sliceStock = ingredient.stocks?.slice ?? 0;
-                const wholeStock = ingredient.stocks?.whole ?? 0;
-                const genStock = typeof ingredient.stocks === 'number' ? ingredient.stocks : 0;
+                {filteredIngredients.length > 0 ? (
+                filteredIngredients.map(([key, ingredient], index) => {
+                    const category = activeCategory;
+                    const { status, color } = getStockStatus(ingredient.stocks || { slice: 0, whole: 0 });
+                    const sliceStock = ingredient.stocks?.slice ?? 0;
+                    const wholeStock = ingredient.stocks?.whole ?? 0;
+                    const genStock = typeof ingredient.stocks === 'number' ? ingredient.stocks : 0;
 
-                return (
+                    return (
                     <tr key={key} className={`${index % 2 === 0 ? 'bg-[#f9f9f9]' : 'bg-white'} hover:bg-gray-200 hover:text-pink-500 transition-colors`}>
                         <td className="py-3 px-6 border-b text-center whitespace-nowrap">{key}</td>
                         <td className="py-3 px-6 border-b text-center whitespace-nowrap">{ingredient.name}</td>
                         {activeCategory === 'Cakes' && (
-                            <>
-                                <td className="py-3 px-6 border-b text-center whitespace-nowrap">{sliceStock}</td>
-                                <td className="py-3 px-6 border-b text-center whitespace-nowrap">{wholeStock}</td>
-                            </>
+                        <>
+                            <td className="py-3 px-6 border-b text-center whitespace-nowrap">{sliceStock}</td>
+                            <td className="py-3 px-6 border-b text-center whitespace-nowrap">{wholeStock}</td>
+                        </>
                         )}
                         {activeCategory !== 'Cakes' && (
-                            <>
-                                <td className="py-3 px-6 border-b text-center whitespace-nowrap">{genStock}</td>
-                            </>
+                        <td className="py-3 px-6 border-b text-center whitespace-nowrap">{genStock}</td>
                         )}
                         <td className={`py-3 px-6 border-b text-center ${color}`}>{status}</td>
                         <td className="py-3 px-6 border-b text-center space-x-2">
-                            <button onClick={() => openUpdateModal({ id: key, category, ...ingredient })} className="text-blue-600"> <FaPencilAlt /> </button>
-                            {deleteMode && (
-                                <button onClick={() => handleDeleteIngredient(key)} className="text-red-600"> <FaTrash /> </button>
-                            )}
+                        <button onClick={() => openUpdateModal({ id: key, category, ...ingredient })} className="text-blue-600">
+                            <FaPencilAlt />
+                        </button>
+                        {deleteMode && (
+                            <button onClick={() => handleDeleteIngredient(key)} className="text-red-600">
+                            <FaTrash />
+                            </button>
+                        )}
                         </td>
-                        </tr>
+                    </tr>
                     );
-                })}
+                })
+                ) : (
+                <tr>
+                    <td colSpan={activeCategory === 'Cakes' ? (deleteMode ? '6' : '5') : (deleteMode ? '5' : '4')} className="text-center text-red-500 py-8">
+                    No external items available.
+                    </td>
+                </tr>
+                )}
             </tbody>
             </table>
+
         </div>
         {showUpdateModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">

@@ -303,34 +303,43 @@ const Ingredients = () => {
             </tr>
           </thead>
           <tbody>
-          {filteredIngredients.map(([key, ingredient], index) => {
-              const { status, color } = getStockStatus(ingredient.stocks);
-              return (
-                <tr key={key} className={`${index % 2 === 0 ? 'bg-[#f9f9f9]' : 'bg-white'} hover:bg-gray-200 hover:text-pink-500 transition-colors`}>
-                  <td className="py-3 px-6 border-b text-center whitespace-nowrap">{key}</td>
-                  <td className="py-3 px-6 border-b text-center whitespace-nowrap">{ingredient.name}</td>
-                  <td className="py-3 px-6 border-b text-center">
-                    <div className="flex items-center justify-center space-x-2">
-                      <span>{ingredient.stocks}</span>
-                      <button onClick={() => handleDecrementStock(key, ingredient.stocks)} className="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition" aria-label="Decrement stock" > &minus; </button>
-                    </div>
-                  </td>
-                  <td className={`py-3 px-6 border-b text-center whitespace-nowrap ${color}`}>{status}</td>
-                  <td className="py-3 px-6 border-b text-center">
-                    <div className="flex items-center justify-center space-x-2">
-                      <button onClick={() => openUpdateModal({ id: key, name: ingredient.name, stocks: ingredient.stocks })} className="text-blue-500" > <FaPencilAlt />
-                      </button>
-                      {deleteMode && (
-                        <button onClick={() => handleDeleteIngredient(key)} className={`text-red-500 ${itemsToDelete.includes(key) ? 'font-bold' : ''}`}><FaTrash />
+            {filteredIngredients.length > 0 ? (
+              filteredIngredients.map(([key, ingredient], index) => {
+                const { status, color } = getStockStatus(ingredient.stocks);
+                return (
+                  <tr key={key} className={`${index % 2 === 0 ? 'bg-[#f9f9f9]' : 'bg-white'} hover:bg-gray-200 hover:text-pink-500 transition-colors`}>
+                    <td className="py-3 px-6 border-b text-center whitespace-nowrap">{key}</td>
+                    <td className="py-3 px-6 border-b text-center whitespace-nowrap">{ingredient.name}</td>
+                    <td className="py-3 px-6 border-b text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span>{ingredient.stocks}</span>
+                        <button onClick={() => handleDecrementStock(key, ingredient.stocks)} className="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition" aria-label="Decrement stock" > &minus; </button>
+                      </div>
+                    </td>
+                    <td className={`py-3 px-6 border-b text-center whitespace-nowrap ${color}`}>{status}</td>
+                    <td className="py-3 px-6 border-b text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <button onClick={() => openUpdateModal({ id: key, name: ingredient.name, stocks: ingredient.stocks })} className="text-blue-500"> <FaPencilAlt />
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                        {deleteMode && (
+                          <button onClick={() => handleDeleteIngredient(key)} className={`text-red-500 ${itemsToDelete.includes(key) ? 'font-bold' : ''}`}><FaTrash />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center text-red-500 py-8">
+                  No ingredients available.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
+
         {/* Update Ingredient Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

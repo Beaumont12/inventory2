@@ -278,13 +278,15 @@ const Utensils = () => {
           <thead>
             <tr>
               <td colSpan="2" className="text-white text-left p-4">
-                  <span className="text-xl font-bold">Utensils</span>
+                <span className="text-xl font-bold">Utensils</span>
               </td>
               <td colSpan="2" className="text-right p-4">
                 <button 
-                onClick={handleOpenModal} 
-                className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2"
-                >+ Add Utensil Stock</button>
+                  onClick={handleOpenModal} 
+                  className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors mr-2"
+                >
+                  + Add Utensil Stock
+                </button>
 
                 <button 
                   onClick={handleToggleDeleteMode} 
@@ -312,26 +314,34 @@ const Utensils = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredUtensils.map((utensil, index) => (
-              <tr
-                key={utensil.id}
-                className={`${index % 2 === 0 ? 'bg-[#f9f9f9]' : 'bg-white'} hover:bg-gray-200 hover:text-pink-500 transition-colors`}
-              >
-                <td className="py-3 px-6 border-b text-center">{utensil.id}</td>
-                <td className="py-3 px-6 border-b text-center">{utensil.name}</td>
-                <td className="py-3 px-6 border-b text-center">{utensil.stocks}</td>
-                <td className="py-3 px-6 border-b text-center">{getStockStatus(utensil.stocks)}</td>
-                {deleteMode && (
-                  <td className="py-3 px-6 border-b text-center">
-                    <input
-                      type="checkbox"
-                      checked={itemsToDelete.includes(utensil.id)}
-                      onChange={() => handleSelectItem(utensil.id)}
-                    />
-                  </td>
-                )}
+            {filteredUtensils.length > 0 ? (
+              filteredUtensils.map((utensil, index) => (
+                <tr
+                  key={utensil.id}
+                  className={`${index % 2 === 0 ? 'bg-[#f9f9f9]' : 'bg-white'} hover:bg-gray-200 hover:text-pink-500 transition-colors`}
+                >
+                  <td className="py-3 px-6 border-b text-center">{utensil.id}</td>
+                  <td className="py-3 px-6 border-b text-center">{utensil.name}</td>
+                  <td className="py-3 px-6 border-b text-center">{utensil.stocks}</td>
+                  <td className="py-3 px-6 border-b text-center">{getStockStatus(utensil.stocks)}</td>
+                  {deleteMode && (
+                    <td className="py-3 px-6 border-b text-center">
+                      <input
+                        type="checkbox"
+                        checked={itemsToDelete.includes(utensil.id)}
+                        onChange={() => handleSelectItem(utensil.id)}
+                      />
+                    </td>
+                  )}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={deleteMode ? "5" : "4"} className="text-center text-red-500 py-8">
+                  No utensils available.
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
 
