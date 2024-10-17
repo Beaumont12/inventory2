@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Col, Row, Table } from 'antd';
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getDatabase, ref, get } from 'firebase/database';
+import moment from 'moment';
 
 const Inventory = () => {
   const [stockHistory, setStockHistory] = useState([]);
@@ -53,11 +54,14 @@ const Inventory = () => {
             action: item.Actions,
             quantity: item.Quantity,
           }));
+
+          // Sort stock history by date (latest first)
+          historyArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+
           setStockHistory(historyArray);
         } else {
           console.log("No stock history found.");
         }
-
         // Fetch ingredients
         const ingredientsRef = ref(db, 'stocks/Ingredients');
         const ingredientsSnapshot = await get(ingredientsRef);
@@ -131,15 +135,20 @@ const Inventory = () => {
         });
 
         // Prepare stock trend data
-        const trendData = []; // This will hold the stock trend data
-
-        // Prepare stock trend data using the historyArray
+        const groupedTrendData = {};
         historyArray.forEach(item => {
-          trendData.push({
-            date: item.date,
-            stock: totalStock + item.quantity, // Adjust based on the quantity changes
-          });
+          const day = moment(item.date).format('YYYY-MM-DD'); // Group by day
+          if (!groupedTrendData[day]) {
+            groupedTrendData[day] = 0;
+          }
+          groupedTrendData[day] += item.quantity;
         });
+
+        // Convert grouped data into an array for the chart
+        const trendData = Object.entries(groupedTrendData).map(([date, stock]) => ({
+          date,
+          stock,
+        }));
 
         setStockTrendData(trendData); // Update the state with the new trend data
 
@@ -208,33 +217,38 @@ const Inventory = () => {
       </Row>
 
       {/* Stock History Table */}
-      
       <div style={{ 
-        maxHeight: '300px', 
-        overflowY: 'auto', 
-        marginTop: '20px', 
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', // Adjusted shadow style
-        borderRadius: '8px' // Optional: adds rounded corners
-        }}><h3 className="text-xl font-semibold p-2 bg-main-green text-white">Stock History</h3>
-        <Table
-          columns={columns}
-          dataSource={stockHistory}
-          rowKey={(record) => record.id}
-          pagination={false}
-        />
+          marginTop: '20px', 
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', // Adjusted shadow style
+          borderRadius: '8px',
+          overflow: 'hidden' // Optional: adds rounded corners
+      }}>
+          <h3 className="text-xl font-semibold p-2 bg-main-green text-white">Stock History</h3>
+          <div style={{ 
+              maxHeight: '300px', 
+              overflowY: 'auto'
+          }}>
+              <Table
+                  columns={columns}
+                  dataSource={stockHistory}
+                  rowKey={(record) => record.id}
+                  pagination={false}
+              />
+          </div>
       </div>
+
 
       {/* Stock Trend Graph */}
       <div className='shadow-lg rounded-lg shadow-slate-200 overflow-hidden mt-6'>
         <h3 className="text-xl font-semibold p-2 bg-main-green text-white">Stock Trend</h3>
       <ResponsiveContainer width="100%" height={300} className="mt-4 p-2">
-        <LineChart data={stockTrendData}>
-          <Line type="monotone" dataKey="stock" stroke="#8884d8" />
+        <BarChart data={stockTrendData}>
+          <Bar type="monotone" dataKey="stock" fill="#8884d8" />
           <CartesianGrid stroke="#ccc" />
           <XAxis dataKey="date" />
           <YAxis />
           <Tooltip />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
       </div>
       
