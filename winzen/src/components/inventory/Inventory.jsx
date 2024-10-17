@@ -158,40 +158,57 @@ const Inventory = () => {
   }, [db]);
 
   const handleExportToExcel = () => {
-    const today = moment().format('YYYY-MM-DD');
-    const filteredStockHistory = stockHistory.filter(item => moment(item.date).format('YYYY-MM-DD') === today);
-
-    let decreased = 0, added = 0, restocked = 0, ordered = 0, removed = 0;
-
-    filteredStockHistory.forEach(item => {
-        const action = item.action.toLowerCase();
-        const quantity = item.quantity;
-
-        if (quantity < 0) decreased += Math.abs(quantity);
-        if (action.includes('add')) added += quantity;
-        if (action.includes('restock')) restocked += quantity;
-        if (action.includes('order')) ordered += quantity;
-        if (action.includes('removed')) removed += quantity;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(filteredStockHistory);
+    const ws = XLSX.utils.json_to_sheet(stockHistory);
     const wb = XLSX.utils.book_new();
+    
+    // Overall Stock History
     XLSX.utils.book_append_sheet(wb, ws, "StockHistory");
-
+  
+    // Summary for Overall
     const summaryData = [
-        ["Decreased", decreased],
-        ["Added", added],
-        ["Restocked", restocked],
-        ["Ordered", ordered],
-        ["Removed", removed],
+      ["Action", "Quantity"],
+      ["Decreased", stockActionsSummary.decreased],
+      ["Added", stockActionsSummary.added],
+      ["Restocked", stockActionsSummary.restocked],
+      ["Ordered", stockActionsSummary.ordered],
+      ["Removed", stockActionsSummary.removed],
     ];
-
+  
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
-
+  
+    // Grouping stock history by month
+    const monthlyData = {};
+    stockHistory.forEach(item => {
+      const monthYear = moment(item.date).format('YYYY-MM'); // Group by year and month
+      if (!monthlyData[monthYear]) {
+        monthlyData[monthYear] = [];
+      }
+      monthlyData[monthYear].push(item);
+    });
+  
+    // Create a sheet for each month
+    Object.entries(monthlyData).forEach(([month, data]) => {
+      const monthlyWs = XLSX.utils.json_to_sheet(data); // Create sheet for the month
+      const monthlySummaryData = [
+        ["Action", "Quantity"],
+        ["Decreased", data.reduce((acc, item) => item.quantity < 0 ? acc + Math.abs(item.quantity) : acc, 0)],
+        ["Added", data.reduce((acc, item) => item.action.includes('Added') ? acc + item.quantity : acc, 0)],
+        ["Restocked", data.reduce((acc, item) => item.action.includes('Restocked') ? acc + item.quantity : acc, 0)],
+        ["Ordered", data.reduce((acc, item) => item.action.includes('Ordered') ? acc + item.quantity : acc, 0)],
+        ["Removed", data.reduce((acc, item) => item.action.includes('Removed') ? acc + item.quantity : acc, 0)],
+      ];
+      
+      const monthlySummarySheet = XLSX.utils.aoa_to_sheet(monthlySummaryData);
+      
+      XLSX.utils.book_append_sheet(wb, monthlyWs, month); // Append the monthly sheet
+      XLSX.utils.book_append_sheet(wb, monthlySummarySheet, `${month} Summary`); // Append the monthly summary sheet
+    });
+  
+    // Finally, write the file
     XLSX.writeFile(wb, `StockHistory_${moment().format('YYYYMMDD')}.xlsx`);
   };
-
+  
   const columns = [
     {
       title: 'Date',
