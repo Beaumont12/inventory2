@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Col, Row, Table } from 'antd';
+import { Card, Col, Row, Table, Button } from 'antd';
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getDatabase, ref, get } from 'firebase/database';
 import moment from 'moment';
+import * as XLSX from 'xlsx';
 
 const Inventory = () => {
   const [stockHistory, setStockHistory] = useState([]);
@@ -10,13 +11,19 @@ const Inventory = () => {
     totalProducts: 0,
     totalStock: 0,
     lowStockItems: 0,
-    outOfStockItems: 0, // Added out of stock items
+    outOfStockItems: 0, 
   });
-  const [stockTrendData, setStockTrendData] = useState([]); // State for stock trend data
+  const [stockTrendData, setStockTrendData] = useState([]);
+  const [stockActionsSummary, setStockActionsSummary] = useState({
+    decreased: 0,
+    added: 0,
+    restocked: 0,
+    ordered: 0,
+    removed: 0,
+  });
 
   const db = getDatabase();
 
-  // Unified stock status function
   const getStockStatus = (stock, category = '') => {
     if (category === 'Cakes' && typeof stock === 'object' && stock.whole !== undefined) {
       const wholeStock = stock.whole;
@@ -31,7 +38,6 @@ const Inventory = () => {
       return { status: 'In Stock', color: 'text-green-500' };
     }
 
-    // Default for ingredients and others
     if (stock === 0) return { status: 'Out of Stock', color: 'text-red-500' };
     if (stock > 0 && stock <= 10) return { status: 'Low Stock', color: 'text-yellow-500' };
     return { status: 'In Stock', color: 'text-green-500' };
@@ -40,35 +46,43 @@ const Inventory = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch stock history
         const historyRef = ref(db, 'stocksHistory');
         const historySnapshot = await get(historyRef);
         let historyArray = [];
+        let decreased = 0, added = 0, restocked = 0, ordered = 0, removed = 0;
 
         if (historySnapshot.exists()) {
           const historyData = historySnapshot.val();
-          historyArray = Object.entries(historyData).map(([id, item]) => ({
-            id,
-            date: item.Date,
-            name: item.ItemName,
-            action: item.Actions,
-            quantity: item.Quantity,
-          }));
+          historyArray = Object.entries(historyData).map(([id, item]) => {
+            const action = item.Actions.toLowerCase();
+            const quantity = item.Quantity;
 
-          // Sort stock history by date (latest first)
+            if (quantity < 0) decreased += Math.abs(quantity);
+            if (action.includes('add')) added += quantity;
+            if (action.includes('restock')) restocked += quantity;
+            if (action.includes('order')) ordered += quantity;
+            if (action.includes('removed')) removed += quantity;
+
+            return {
+              id,
+              date: item.Date,
+              name: item.ItemName,
+              action: item.Actions,
+              quantity: item.Quantity,
+            };
+          });
+
           historyArray.sort((a, b) => new Date(b.date) - new Date(a.date));
-
           setStockHistory(historyArray);
-        } else {
-          console.log("No stock history found.");
+          setStockActionsSummary({ decreased, added, restocked, ordered, removed });
         }
-        // Fetch ingredients
+
         const ingredientsRef = ref(db, 'stocks/Ingredients');
         const ingredientsSnapshot = await get(ingredientsRef);
         let totalIngredients = 0;
         let totalStock = 0;
-        let lowStockItems = 0; // Reset for low stock items
-        let outOfStockItems = 0; // Reset for out of stock items
+        let lowStockItems = 0;
+        let outOfStockItems = 0;
 
         if (ingredientsSnapshot.exists()) {
           const ingredientsData = ingredientsSnapshot.val();
@@ -83,24 +97,21 @@ const Inventory = () => {
                   const wholeStock = parseInt(item.stocks.whole, 10) || 0;
                   const { status } = getStockStatus({ whole: wholeStock }, 'Cakes');
 
-                  totalStock += wholeStock * 8; // Update this line as necessary
-                  if (status === 'Low Stock') lowStockItems++; // Increment low stock count
-                  if (wholeStock === 0) outOfStockItems++; // Increment out of stock count
+                  totalStock += wholeStock * 8;
+                  if (status === 'Low Stock') lowStockItems++;
+                  if (wholeStock === 0) outOfStockItems++;
                 } else {
                   totalStock += parseInt(item.stocks, 10) || 0;
                   const { status } = getStockStatus(parseInt(item.stocks, 10), 'Ingredients');
 
-                  if (status === 'Low Stock') lowStockItems++; // Increment low stock count
-                  if (parseInt(item.stocks, 10) === 0) outOfStockItems++; // Increment out of stock count
+                  if (status === 'Low Stock') lowStockItems++;
+                  if (parseInt(item.stocks, 10) === 0) outOfStockItems++;
                 }
               });
             }
           });
-        } else {
-          console.log("No ingredients found.");
         }
 
-        // Fetch utensils
         const utensilsRef = ref(db, 'stocks/Utensils');
         const utensilsSnapshot = await get(utensilsRef);
         let totalUtensils = 0;
@@ -116,42 +127,28 @@ const Inventory = () => {
 
               const { status } = getStockStatus(stock, 'Utensils');
 
-              if (status === 'Low Stock') lowStockItems++; // Increment low stock count
-              if (stock === 0) outOfStockItems++; // Increment out of stock count
-            } else {
-              console.warn('Utensil object is missing a name property:', utensil);
+              if (status === 'Low Stock') lowStockItems++;
+              if (stock === 0) outOfStockItems++;
             }
           });
-        } else {
-          console.log("No utensils found.");
         }
 
-        // Update stock summary
         setStockSummary({
           totalProducts: totalIngredients + totalUtensils,
           totalStock: totalStock,
-          lowStockItems: lowStockItems, // Combined low stock items count
-          outOfStockItems: outOfStockItems, // Total out of stock items
+          lowStockItems: lowStockItems,
+          outOfStockItems: outOfStockItems,
         });
 
-        // Prepare stock trend data
         const groupedTrendData = {};
         historyArray.forEach(item => {
-          const day = moment(item.date).format('YYYY-MM-DD'); // Group by day
-          if (!groupedTrendData[day]) {
-            groupedTrendData[day] = 0;
-          }
+          const day = moment(item.date).format('YYYY-MM-DD');
+          if (!groupedTrendData[day]) groupedTrendData[day] = 0;
           groupedTrendData[day] += item.quantity;
         });
 
-        // Convert grouped data into an array for the chart
-        const trendData = Object.entries(groupedTrendData).map(([date, stock]) => ({
-          date,
-          stock,
-        }));
-
-        setStockTrendData(trendData); // Update the state with the new trend data
-
+        const trendData = Object.entries(groupedTrendData).map(([date, stock]) => ({ date, stock }));
+        setStockTrendData(trendData);
       } catch (error) {
         console.error("Error fetching data: ", error);
       }
@@ -159,6 +156,26 @@ const Inventory = () => {
 
     fetchData();
   }, [db]);
+
+  const handleExportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(stockHistory)
+    const wb = XLSX.utils.book_new();
+  
+    XLSX.utils.book_append_sheet(wb, ws, "StockHistory");
+  
+    const summaryData = [
+      ["Decreased", stockActionsSummary.decreased],
+      ["Added", stockActionsSummary.added],
+      ["Restocked", stockActionsSummary.restocked],
+      ["Ordered", stockActionsSummary.ordered],
+      ["Removed", stockActionsSummary.removed], 
+    ];
+  
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    
+    XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+    XLSX.writeFile(wb, `StockHistory_${moment().format('YYYYMMDD')}.xlsx`);
+  };  
 
   const columns = [
     {
@@ -192,10 +209,9 @@ const Inventory = () => {
     <div className="flex-1 bg-white p-7">
       <h2 className="text-2xl font-bold mb-5 text-main-green">Stocks Dashboard</h2>
 
-      {/* Summary Cards */}
       <Row gutter={16}>
         <Col span={6}>
-          <Card title="Total Products" bordered={false} className="shadow-lg bg-emerald-400 rounded-lg">
+          <Card title="Total Items" bordered={false} className="shadow-lg bg-emerald-400 rounded-lg">
             <div className="text-3xl font-semibold">{stockSummary.totalProducts}</div>
           </Card>
         </Col>
@@ -217,41 +233,44 @@ const Inventory = () => {
       </Row>
 
       {/* Stock History Table */}
-      <div style={{ 
-          marginTop: '20px', 
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', // Adjusted shadow style
-          borderRadius: '8px',
-          overflow: 'hidden' // Optional: adds rounded corners
-      }}>
-          <h3 className="text-xl font-semibold p-2 bg-main-green text-white">Stock History</h3>
-          <div style={{ 
-              maxHeight: '300px', 
-              overflowY: 'auto'
-          }}>
-              <Table
-                  columns={columns}
-                  dataSource={stockHistory}
-                  rowKey={(record) => record.id}
-                  pagination={false}
-              />
+      <div style={{ marginTop: '20px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: '8px', overflow: 'hidden' }}>
+        <div className='flex justify-between bg-main-green items-center p-2'>
+          <h3 className="text-xl font-semibold p-2  text-white">Stock History</h3>
+          <Button type="primary" className="rounded-lg font-bold bg-main-honey" onClick={handleExportToExcel}>Export to Excel</Button>
+        </div>
+        
+        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          <Table
+            columns={columns}
+            dataSource={stockHistory}
+            rowKey={(record) => record.id}
+            pagination={false}
+          />
+        </div>
+          <div className='p-2 bg-main-green text-white'>
+            <div className='items-center justify-between flex'>
+              <p className='text-xs'>Decreased: {stockActionsSummary.decreased}</p>
+              <p className='text-xs'>Added: {stockActionsSummary.added}</p>
+              <p className='text-xs'>Restocked: {stockActionsSummary.restocked}</p>
+              <p className='text-xs'>Ordered: {stockActionsSummary.ordered}</p>
+              <p className='text-xs'>Removed: {stockActionsSummary.removed}</p>
+            </div>
           </div>
       </div>
-
 
       {/* Stock Trend Graph */}
       <div className='shadow-lg rounded-lg shadow-slate-200 overflow-hidden mt-6'>
         <h3 className="text-xl font-semibold p-2 bg-main-green text-white">Stock Trend</h3>
-      <ResponsiveContainer width="100%" height={300} className="mt-4 p-2">
-        <BarChart data={stockTrendData}>
-          <Bar type="monotone" dataKey="stock" fill="#8884d8" />
-          <CartesianGrid stroke="#ccc" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-        </BarChart>
-      </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height={300} className="mt-4 p-2">
+          <BarChart data={stockTrendData}>
+            <Bar type="monotone" dataKey="stock" fill="#DDB04B" />
+            <CartesianGrid stroke="#ccc" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
-      
     </div>
   );
 };
