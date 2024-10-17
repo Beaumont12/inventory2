@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { MdEdit, MdDelete } from 'react-icons/md';
 import { getDatabase, ref, get, onValue, update, remove } from 'firebase/database';
 import { initializeApp } from 'firebase/app';
-import { PiUsersThree } from "react-icons/pi";
 import { FaSearch, FaIdBadge, FaUserShield, FaPhone, FaUserAlt, FaBirthdayCake } from 'react-icons/fa';
 
 const firebaseConfig = {
@@ -23,19 +22,7 @@ const Manageuser = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
-  const [updatedUserData, setUpdatedUserData] = useState({
-    Name: '',
-    Email: '',
-    Age: '',
-    Phone: '',
-    Birthday: {
-      Date: '',
-      Month: '',
-      Year: ''
-    },
-    Password: '', // New field for password
-    Role: '' // New field for role
-  });
+  const [updatedUserData, setUpdatedUserData] = useState({ Name: '', Email: '', Age: '', Phone: '', Birthday: { Date: '', Month: '', Year: '' }, Password: '', Role: ''  });
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
   const roleOptions = ['Super Admin', 'Admin', 'Cashier'];
@@ -66,7 +53,6 @@ const Manageuser = () => {
   }, []);
 
   useEffect(() => {
-    // Filter users based on search query
     const filteredResults = users.filter(user =>
       user.Name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -86,19 +72,7 @@ const Manageuser = () => {
 
   const handleCloseModal = () => {
     setEditingUser(null);
-    setUpdatedUserData({
-      Name: '',
-      Email: '',
-      Age: '',
-      Phone: '',
-      Birthday: {
-        Date: '',
-        Month: '',
-        Year: ''
-      },
-      Password: '', // Reset password field
-      Role: '' // Reset role field
-    });
+    setUpdatedUserData({ Name: '', Email: '', Age: '', Phone: '', Birthday: { Date: '', Month: '', Year: '' }, Password: '', Role: ''  });
     setModalOpen(false);
   };
 
@@ -123,6 +97,18 @@ const Manageuser = () => {
   };
 
   const confirmDeleteUser = () => {
+    const currentUserRole = users.find(user => user.id === deleteUserId)?.Role;
+  
+    if (currentUserRole === 'Super Admin') {
+      const superAdminCount = users.filter(user => user.Role === 'Super Admin').length;
+      
+      if (superAdminCount === 1) {
+        alert("You cannot delete the last remaining Super Admin.");
+        setDeleteUserId(null);
+        return;
+      }
+    }
+  
     const db = getDatabase();
     const userRef = ref(db, `staffs/${deleteUserId}`);
     remove(userRef)
@@ -133,20 +119,10 @@ const Manageuser = () => {
       .catch((error) => {
         console.error('Error deleting staff:', error);
       });
-  };
+  };  
 
   const handleSaveChanges = () => {
-    if (
-      !updatedUserData.Name ||
-      !updatedUserData.Email ||
-      !updatedUserData.Age ||
-      !updatedUserData.Phone ||
-      !updatedUserData.Birthday.Date ||
-      !updatedUserData.Birthday.Month ||
-      !updatedUserData.Birthday.Year ||
-      !updatedUserData.Password ||
-      !updatedUserData.Role
-    ) {
+    if ( !updatedUserData.Name || !updatedUserData.Email || !updatedUserData.Age || !updatedUserData.Phone || !updatedUserData.Birthday.Date || !updatedUserData.Birthday.Month || !updatedUserData.Birthday.Year || !updatedUserData.Password || !updatedUserData.Role ) {
         alert('Please fill out all fields before saving.');
         return;
     }
@@ -159,13 +135,9 @@ const Manageuser = () => {
       Email: updatedUserData.Email,
       Age: updatedUserData.Age,
       Phone: updatedUserData.Phone,
-      Password: updatedUserData.Password, // Add password field
+      Password: updatedUserData.Password, 
       Role: updatedUserData.Role, // Add role field
-      Birthday: {
-        Date: updatedUserData.Birthday.Date,
-        Month: updatedUserData.Birthday.Month,
-        Year: updatedUserData.Birthday.Year
-      }
+      Birthday: { Date: updatedUserData.Birthday.Date, Month: updatedUserData.Birthday.Month, Year: updatedUserData.Birthday.Year}
     }).then(() => {
       setUsers(users.map(user => {
         if (user.id === editingUser.id) {
@@ -188,13 +160,7 @@ const Manageuser = () => {
           {/* Search bar */}
           <div className="relative mb-4 mt-4">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search user by name"
-            value={searchQuery}
-            onChange={(e)=> setSearchQuery(e.target.value)}
-            className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded-lg shadow-md py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
-          />
+          <input type="text" placeholder="Search user by name" value={searchQuery} onChange={(e)=> setSearchQuery(e.target.value)} className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded-lg shadow-md py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"/>
         </div>
           <div className="grid grid-cols-1 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 border border-gray-100 rounded-lg shadow-md bg-gray-100">
             {loading ? (
@@ -234,11 +200,9 @@ const Manageuser = () => {
                     </p>
                     <div className="mt-4 flex justify-end">
                       <button onClick={() => handleEditClick(user)} className="mr-2 bg-main-honey hover:bg-light-honey text-white font-bold py-2 px-4 rounded">
-                        <MdEdit className="h-5 w-5 text-white" /> {/* Edit Icon */}
-                      </button>
+                        <MdEdit className="h-5 w-5 text-white" /> </button>
                       <button onClick={() => handleDeleteClick(user.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                        <MdDelete className="h-5 w-5 text-white" /> {/* Delete Icon */}
-                      </button>
+                        <MdDelete className="h-5 w-5 text-white" />  </button>
                     </div>
                   </div>
                 </div>
@@ -257,12 +221,8 @@ const Manageuser = () => {
                 <h2 className="text-xl font-semibold mb-4">Confirm Delete</h2>
                 <p className="text-gray-700">Are you sure you want to delete this Staff?</p>
                 <div className="mt-4 flex justify-end">
-                  <button onClick={() => setDeleteUserId(null)} className="mr-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
-                    Cancel
-                  </button>
-                  <button onClick={confirmDeleteUser} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                    Delete
-                  </button>
+                  <button onClick={() => setDeleteUserId(null)} className="mr-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded"> Cancel </button>
+                  <button onClick={confirmDeleteUser} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"> Delete </button>
                 </div>
               </div>
             </div>
@@ -315,12 +275,8 @@ const Manageuser = () => {
                   </select>
                 </div>
                 <div className="mt-4 flex justify-end">
-                  <button onClick={handleCloseModal} className="mr-2 bg-red-700 hover:bg-gray-300 text-white font-bold py-2 px-4 rounded">
-                    Cancel
-                  </button>
-                  <button onClick={handleSaveChanges} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Save Changes
-                  </button>
+                  <button onClick={handleCloseModal} className="mr-2 bg-red-700 hover:bg-gray-300 text-white font-bold py-2 px-4 rounded">  Cancel </button>
+                  <button onClick={handleSaveChanges} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"> Save Changes </button>
                 </div>
               </div>
             </div>

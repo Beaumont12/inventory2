@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Col, Row, Table, Button } from 'antd';
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { getDatabase, ref, get } from 'firebase/database';
+import { getDatabase, ref, get, onValue, off } from 'firebase/database';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 
@@ -44,117 +44,135 @@ const Inventory = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = () => {
       try {
         const historyRef = ref(db, 'stocksHistory');
-        const historySnapshot = await get(historyRef);
-        let historyArray = [];
-        let decreased = 0, added = 0, restocked = 0, ordered = 0, removed = 0;
-
-        if (historySnapshot.exists()) {
-          const historyData = historySnapshot.val();
-          historyArray = Object.entries(historyData).map(([id, item]) => {
-            const action = item.Actions.toLowerCase();
-            const quantity = item.Quantity;
-
-            if (quantity < 0) decreased += Math.abs(quantity);
-            if (action.includes('add')) added += quantity;
-            if (action.includes('restock')) restocked += quantity;
-            if (action.includes('order')) ordered += quantity;
-            if (action.includes('removed')) removed += quantity;
-
-            return {
-              id,
-              date: item.Date,
-              name: item.ItemName,
-              action: item.Actions,
-              quantity: item.Quantity,
-            };
-          });
-
-          historyArray.sort((a, b) => new Date(b.date) - new Date(a.date));
-          setStockHistory(historyArray);
-          setStockActionsSummary({ decreased, added, restocked, ordered, removed });
-        }
-
+      
+        onValue(historyRef, (snapshot) => {
+          let historyArray = [];
+          let decreased = 0, added = 0, restocked = 0, ordered = 0, removed = 0;
+          let groupedTrendData = {};
+  
+          if (snapshot.exists()) {
+            const historyData = snapshot.val();
+            historyArray = Object.entries(historyData).map(([id, item]) => {
+              const action = item.Actions.toLowerCase();
+              const quantity = item.Quantity;
+  
+              if (quantity < 0) decreased += Math.abs(quantity);
+              if (action.includes('added')) added += quantity;
+              if (action.includes('restocked')) restocked += quantity;
+              if (action.includes('ordered')) ordered += quantity;
+              if (action.includes('removed')) removed += quantity;
+  
+              // Group stock changes by date for trend calculation
+              const day = moment(item.Date).format('YYYY-MM-DD');
+              if (!groupedTrendData[day]) groupedTrendData[day] = 0;
+              groupedTrendData[day] += item.Quantity;
+  
+              return {
+                id,
+                date: item.Date,
+                name: item.ItemName,
+                action: item.Actions,
+                quantity: item.Quantity,
+              };
+            });
+  
+            historyArray.reverse();
+            setStockHistory(historyArray);
+            setStockActionsSummary({ decreased, added, restocked, ordered, removed });
+  
+            // Prepare stock trend data for the chart
+            const trendData = Object.entries(groupedTrendData).map(([date, stock]) => ({ date, stock }));
+            setStockTrendData(trendData); // Set trend data after it's been fully processed
+          }
+        });
+  
+        // Real-time listener for stock summary
         const ingredientsRef = ref(db, 'stocks/Ingredients');
-        const ingredientsSnapshot = await get(ingredientsRef);
-        let totalIngredients = 0;
-        let totalStock = 0;
-        let lowStockItems = 0;
-        let outOfStockItems = 0;
-
-        if (ingredientsSnapshot.exists()) {
-          const ingredientsData = ingredientsSnapshot.val();
-
-          Object.keys(ingredientsData).forEach((category) => {
-            if (!category.includes('Count')) {
-              const items = ingredientsData[category];
-              totalIngredients += Object.keys(items).length;
-
-              Object.values(items).forEach((item) => {
-                if (typeof item.stocks === 'object') {
-                  const wholeStock = parseInt(item.stocks.whole, 10) || 0;
-                  const { status } = getStockStatus({ whole: wholeStock }, 'Cakes');
-
-                  totalStock += wholeStock * 8;
+        onValue(ingredientsRef, (snapshot) => {
+          let totalIngredients = 0;
+          let totalStock = 0;
+          let lowStockItems = 0;
+          let outOfStockItems = 0;
+  
+          if (snapshot.exists()) {
+            const ingredientsData = snapshot.val();
+  
+            Object.keys(ingredientsData).forEach((category) => {
+              if (!category.includes('Count')) {
+                const items = ingredientsData[category];
+                totalIngredients += Object.keys(items).length;
+  
+                Object.values(items).forEach((item) => {
+                  if (typeof item.stocks === 'object') {
+                    const wholeStock = parseInt(item.stocks.whole, 10) || 0;
+                    const { status } = getStockStatus({ whole: wholeStock }, 'Cakes');
+  
+                    totalStock += wholeStock * 8;
+                    if (status === 'Low Stock') lowStockItems++;
+                    if (wholeStock === 0) outOfStockItems++;
+                  } else {
+                    totalStock += parseInt(item.stocks, 10) || 0;
+                    const { status } = getStockStatus(parseInt(item.stocks, 10), 'Ingredients');
+  
+                    if (status === 'Low Stock') lowStockItems++;
+                    if (parseInt(item.stocks, 10) === 0) outOfStockItems++;
+                  }
+                });
+              }
+            });
+          }
+  
+          const utensilsRef = ref(db, 'stocks/Utensils');
+          onValue(utensilsRef, (snapshot) => {
+            let totalUtensils = 0;
+  
+            if (snapshot.exists()) {
+              const utensilsData = snapshot.val();
+              totalUtensils += Object.keys(utensilsData).length;
+  
+              Object.values(utensilsData).forEach((utensil) => {
+                if (utensil.name && !utensil.name.includes('Count')) {
+                  const stock = parseInt(utensil.stocks, 10) || 0;
+                  totalStock += stock;
+  
+                  const { status } = getStockStatus(stock, 'Utensils');
+  
                   if (status === 'Low Stock') lowStockItems++;
-                  if (wholeStock === 0) outOfStockItems++;
-                } else {
-                  totalStock += parseInt(item.stocks, 10) || 0;
-                  const { status } = getStockStatus(parseInt(item.stocks, 10), 'Ingredients');
-
-                  if (status === 'Low Stock') lowStockItems++;
-                  if (parseInt(item.stocks, 10) === 0) outOfStockItems++;
+                  if (stock === 0) outOfStockItems++;
                 }
               });
             }
+  
+            setStockSummary({
+              totalProducts: totalIngredients + totalUtensils,
+              totalStock: totalStock,
+              lowStockItems: lowStockItems,
+              outOfStockItems: outOfStockItems,
+            });
           });
-        }
-
-        const utensilsRef = ref(db, 'stocks/Utensils');
-        const utensilsSnapshot = await get(utensilsRef);
-        let totalUtensils = 0;
-
-        if (utensilsSnapshot.exists()) {
-          const utensilsData = utensilsSnapshot.val();
-          totalUtensils += Object.keys(utensilsData).length;
-
-          Object.values(utensilsData).forEach((utensil) => {
-            if (utensil.name && !utensil.name.includes('Count')) {
-              const stock = parseInt(utensil.stocks, 10) || 0;
-              totalStock += stock;
-
-              const { status } = getStockStatus(stock, 'Utensils');
-
-              if (status === 'Low Stock') lowStockItems++;
-              if (stock === 0) outOfStockItems++;
-            }
-          });
-        }
-
-        setStockSummary({
-          totalProducts: totalIngredients + totalUtensils,
-          totalStock: totalStock,
-          lowStockItems: lowStockItems,
-          outOfStockItems: outOfStockItems,
         });
-
-        const groupedTrendData = {};
-        historyArray.forEach(item => {
-          const day = moment(item.date).format('YYYY-MM-DD');
-          if (!groupedTrendData[day]) groupedTrendData[day] = 0;
-          groupedTrendData[day] += item.quantity;
-        });
-
-        const trendData = Object.entries(groupedTrendData).map(([date, stock]) => ({ date, stock }));
-        setStockTrendData(trendData);
+  
       } catch (error) {
         console.error("Error fetching data: ", error);
       }
     };
-
-    fetchData();
+  
+    fetchData(); // Call fetchData to start listening for changes
+  
+    // Clean up listeners when the component unmounts
+    return () => {
+      const historyRef = ref(db, 'stocksHistory');
+      const ingredientsRef = ref(db, 'stocks/Ingredients');
+      const utensilsRef = ref(db, 'stocks/Utensils');
+      
+      // Use 'off' to remove listeners
+      off(historyRef);
+      off(ingredientsRef);
+      off(utensilsRef);
+    };
   }, [db]);
 
   const handleExportToExcel = () => {
@@ -295,7 +313,7 @@ const Inventory = () => {
         <h3 className="text-xl font-semibold p-2 bg-main-green text-white">Stock Trend</h3>
         <ResponsiveContainer width="100%" height={300} className="mt-4 p-2">
           <BarChart data={stockTrendData}>
-            <Bar type="monotone" dataKey="stock" fill="#DDB04B" />
+            <Bar type="monotone" dataKey="stock" fill="#DDB04B"/>
             <CartesianGrid stroke="#ccc" />
             <XAxis dataKey="date" />
             <YAxis />

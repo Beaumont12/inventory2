@@ -129,12 +129,7 @@ const App = () => {
                 />
               </div>
             </div>
-            <div className="mb-4 text-right">
-              <a href="#" className="text-main-green hover:underline text-sm">
-                Forgot Password?
-              </a>
-            </div>
-            {error && <div className="text-red-500 mb-4">{error}</div>}
+            {error && <div className="text-red-500 mb-4 mt-2">{error}</div>}
             <button
               type="submit"
               className="w-full bg-main-green text-main-honey py-2 px-4 rounded-md hover:bg-dark-green transition-all"
