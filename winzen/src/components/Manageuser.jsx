@@ -196,12 +196,12 @@ const Manageuser = () => {
             className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded-lg shadow-md py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
           />
         </div>
-          <div className="grid grid-cols-1 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 border border-gray-100 rounded-lg shadow-md bg-main-green">
+          <div className="grid grid-cols-1 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 border border-gray-100 rounded-lg shadow-md bg-gray-100">
             {loading ? (
-              <p>Loading...</p>
+              <p className='text-center text-red-600'>Loading...</p>
             ) : (
               filteredUsers.map((user) => (
-                <div key={user.id} className="bg-white rounded-md shadow-md overflow-hidden shadow-honey">
+                <div key={user.id} className="bg-white rounded-md shadow-md overflow-hidden">
                   <div className="p-2">
                     <div className="flex items-center mb-2">
                       <div className="w-[56px] h-[56px] mr-2 rounded-full overflow-hidden">

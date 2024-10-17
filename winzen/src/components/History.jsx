@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ref, get } from 'firebase/database';
-import { db, app } from '../../firebaseConfig'
-import { MdOutlineHistory } from "react-icons/md";
+import { db } from '../../firebaseConfig';
 import { FaSearch, FaUser, FaUserTie, FaFire, FaSnowflake, FaClipboard } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
+import moment from 'moment'; 
 
 const History = () => {
   const [historyData, setHistoryData] = useState([]);
@@ -21,7 +22,8 @@ const History = () => {
             id: key,
             ...data[key],
             totalQuantity: Object.values(data[key].orderItems).reduce((acc, item) => acc + item.quantity, 0),
-            orderDate: new Date(data[key].orderDateTime).toDateString()
+            orderDate: new Date(data[key].orderDateTime).toDateString(),
+            staffName: data[key].staffName,
           }));
           setHistoryData(historyArray);
         } else {
@@ -57,9 +59,56 @@ const History = () => {
     (selectedMonth === '' || new Date(history.orderDateTime).toLocaleString('default', { month: 'short' }) === selectedMonth)
   );
 
-  // Calculate total quantity and amount for the filtered data (based on the selected month)
   const totalQuantity = filteredHistoryData.reduce((total, history) => total + history.totalQuantity, 0);
   const totalAmount = filteredHistoryData.reduce((total, history) => total + parseFloat(history.total), 0);
+
+  const prepareStaffSummary = () => {
+    const staffSummary = {};
+    let overallTotalQuantity = 0;
+    let overallTotalAmount = 0;
+  
+    filteredHistoryData.forEach(history => {
+      if (!staffSummary[history.staffName]) {
+        staffSummary[history.staffName] = { totalQuantity: 0, totalOrders: 0, totalAmount: 0 };
+      }
+      staffSummary[history.staffName].totalQuantity += history.totalQuantity;
+      staffSummary[history.staffName].totalOrders += 1;
+      staffSummary[history.staffName].totalAmount += parseFloat(history.total);
+  
+      overallTotalQuantity += history.totalQuantity;
+      overallTotalAmount += parseFloat(history.total);
+    });
+  
+    const staffSummaryArray = Object.entries(staffSummary).map(([staffName, { totalQuantity, totalOrders, totalAmount }]) => ({
+      staffName,
+      totalQuantity,
+      totalOrders,
+      totalAmount
+    }));
+  
+    staffSummaryArray.push({
+      staffName: 'Total',
+      totalQuantity: overallTotalQuantity,
+      totalOrders: filteredHistoryData.length,
+      totalAmount: overallTotalAmount
+    });
+  
+    return staffSummaryArray;
+  };  
+
+  const handleExportToExcel = () => {
+    const historySheet = XLSX.utils.json_to_sheet(filteredHistoryData);
+    
+    const staffSummaryData = prepareStaffSummary();
+    const summarySheet = XLSX.utils.json_to_sheet(staffSummaryData);
+
+    const wb = XLSX.utils.book_new();
+    
+    XLSX.utils.book_append_sheet(wb, historySheet, "TransactionHistory");
+    XLSX.utils.book_append_sheet(wb, summarySheet, "StaffSummary");
+
+    XLSX.writeFile(wb, `TransactionHistory_${moment().format('YYYYMMDD')}.xlsx`);
+  };
 
   const months = [
     { value: '', label: 'OVERALL' },
@@ -215,11 +264,17 @@ const History = () => {
               ))}
             </select>
           </div>
-            <div className="bg-main-green rounded-lg p-4 shadow-lg mt-4">
-              <h2 className="text-xl font-bold mb-2 text-white">Total Transactions</h2>
-              <p className='text-white'>Total Quantity: {totalQuantity}</p>
-              <p className='text-white'>Total Amount: &#8369;{totalAmount.toFixed(2)}</p>
-            </div>
+          <div className="bg-main-green rounded-lg p-4 shadow-lg mt-4">
+            <h2 className="text-xl font-bold mb-2 text-white">Total Transactions</h2>
+            <p className='text-white'>Total Quantity: {totalQuantity}</p>
+            <p className='text-white'>Total Amount: &#8369;{totalAmount.toFixed(2)}</p>
+            <button 
+              onClick={handleExportToExcel} 
+              className="mt-4 bg-light-green text-white py-2 px-4 rounded-lg hover:bg-green-600"
+            >
+              Export to Excel
+            </button>
+          </div>
           <div className="flex justify-between items-center p-4 my-4 bg-main-honey text-white rounded-lg shadow-md font-extrabold mt-4">
             <span className="text-lg w-1/5 text-center">Order #</span>
             <span className="text-lg w-1/5 text-center">Staff Name</span>
@@ -228,17 +283,23 @@ const History = () => {
             <span className="text-lg w-1/5 text-center">Total</span>
           </div>
           <ul>
-          {filteredHistoryData.slice().reverse().map((history) => (
-              <li key={history.id} className="cursor-pointer" onClick={() => handleHistoryClick(history.id)}>
-                <div className="flex justify-between items-center p-4 my-2 bg-white rounded-lg shadow-md">
-                  <span className="text-lg font-semibold w-1/5 text-center text-gray-600">{history.orderNumber}</span>
-                  <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.staffName}</span>
-                  <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.orderDate}</span>
-                  <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.totalQuantity}</span>
-                  <span className="text-lg w-1/5 text-center font-semibold text-gray-600">&#8369;{history.total}</span>
-                </div>
+            {filteredHistoryData.length === 0 ? (
+              <li className="text-center text-gray-500 p-4">
+                No transaction history available.
               </li>
-            ))}
+            ) : (
+              filteredHistoryData.slice().reverse().map((history) => (
+                <li key={history.id} className="cursor-pointer" onClick={() => handleHistoryClick(history.id)}>
+                  <div className="flex justify-between items-center p-4 my-2 bg-white rounded-lg shadow-md">
+                    <span className="text-lg font-semibold w-1/5 text-center text-gray-600">{history.orderNumber}</span>
+                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.staffName}</span>
+                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.orderDate}</span>
+                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.totalQuantity}</span>
+                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">&#8369;{history.total}</span>
+                  </div>
+                </li>
+              ))
+            )}
           </ul>
         </div>
       </div>

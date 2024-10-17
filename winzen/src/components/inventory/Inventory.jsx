@@ -158,24 +158,39 @@ const Inventory = () => {
   }, [db]);
 
   const handleExportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(stockHistory)
+    const today = moment().format('YYYY-MM-DD');
+    const filteredStockHistory = stockHistory.filter(item => moment(item.date).format('YYYY-MM-DD') === today);
+
+    let decreased = 0, added = 0, restocked = 0, ordered = 0, removed = 0;
+
+    filteredStockHistory.forEach(item => {
+        const action = item.action.toLowerCase();
+        const quantity = item.quantity;
+
+        if (quantity < 0) decreased += Math.abs(quantity);
+        if (action.includes('add')) added += quantity;
+        if (action.includes('restock')) restocked += quantity;
+        if (action.includes('order')) ordered += quantity;
+        if (action.includes('removed')) removed += quantity;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(filteredStockHistory);
     const wb = XLSX.utils.book_new();
-  
     XLSX.utils.book_append_sheet(wb, ws, "StockHistory");
-  
+
     const summaryData = [
-      ["Decreased", stockActionsSummary.decreased],
-      ["Added", stockActionsSummary.added],
-      ["Restocked", stockActionsSummary.restocked],
-      ["Ordered", stockActionsSummary.ordered],
-      ["Removed", stockActionsSummary.removed], 
+        ["Decreased", decreased],
+        ["Added", added],
+        ["Restocked", restocked],
+        ["Ordered", ordered],
+        ["Removed", removed],
     ];
-  
+
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-    
     XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+
     XLSX.writeFile(wb, `StockHistory_${moment().format('YYYYMMDD')}.xlsx`);
-  };  
+  };
 
   const columns = [
     {

@@ -191,45 +191,44 @@ const Adduser = () => {
     <div className="flex-1 bg-white">
       <div className="p-7">
         <h1 className="text-6xl text-center mt-2 font-bold">Add Users</h1>
-        <h3 className="text-lg md:text-base text-center text-white mt-4 md:mt-8 font-semibold bg-main-green">ADD STAFF INFO TO ACCESS APP</h3>
-        <hr className="my-4 border-gray-500 border-2" />
+        <h3 className="text-lg md:text-base text-center text-white mt-4 md:mt-8 font-semibold bg-main-green rounded-lg">ADD STAFF INFO TO ACCESS APP</h3>
         <div className="flex justify-center items-center mt-5 mb-10 w-full">
           <div className="max-w-md bg-gray-100 border border-gray-100 p-8 rounded-md shadow-lg w-1/2">
             <form ref={form} onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block text-main-green text-sm font-bold mb-2">Name</label>
-                <input type="text" name="Name" value={userData.Name} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md shadow-light-honey rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                <input type="text" name="Name" value={userData.Name} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
               </div>
               <div className="mb-4">
                 <label className="block text-main-green text-sm font-bold mb-2">Email</label>
-                <input type="text" name="Email" value={userData.Email} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md shadow-light-honey rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                <input type="text" name="Email" value={userData.Email} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
               </div>
               <div className="mb-4">
                 <label className="block text-main-green text-sm font-bold mb-2">Age</label>
-                <input type="number" name="Age" value={userData.Age} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md shadow-light-honey rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                <input type="number" name="Age" value={userData.Age} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
               </div>
               <div className="mb-4">
                 <label className="block text-main-green text-sm font-bold mb-2">Phone</label>
-                <input type="number" name="Phone" value={userData.Phone} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md shadow-light-honey rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                <input type="number" name="Phone" value={userData.Phone} onChange={handleInputChange} className="appearance-none block w-full bg-white text-gray-700 border border-gray-100 shadow-md rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
               </div>
               <div className="mb-4">
                 <label className="block text-main-green text-sm font-bold mb-2">Birthday</label>
                 <div className="grid grid-cols-3 gap-2">
                   <input type="number" name="Birthday.Month" placeholder="Month" value={userData.Birthday.Month} onChange={handleInputChange} 
-                  className="appearance-none block w-full bg-white shadow-light-honey shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                  className="appearance-none block w-full bg-white shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
                   <input type="number" name="Birthday.Date" placeholder="Date" value={userData.Birthday.Date} onChange={handleInputChange} 
-                  className="appearance-none block w-full bg-white shadow-light-honey shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                  className="appearance-none block w-full bg-white shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
                   <input type="number" name="Birthday.Year" placeholder="Year" value={userData.Birthday.Year} onChange={handleInputChange} 
-                  className="appearance-none block w-full bg-white shadow-light-honey shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                  className="appearance-none block w-full bg-white shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
                 </div>
               </div>
               <div className="mb-4">
                 <label className="block text-main-green text-sm font-bold mb-2">Image</label>
-                <input type="file" accept="image/*" name="image" className="appearance-none block w-full bg-white shadow-light-honey shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                <input type="file" accept="image/*" name="image" className="appearance-none block w-full bg-white shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
               </div>
               <div className="mb-4">
                 <label className="block text-main-green text-sm font-bold mb-2">Password</label>
-                <input type="password" name="Password" value={userData.Password} onChange={handleInputChange} className="appearance-none block w-full bg-white shadow-light-honey shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
+                <input type="password" name="Password" value={userData.Password} onChange={handleInputChange} className="appearance-none block w-full bg-white shadow-md text-gray-700 border border-gray-100 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4" />
               </div>
               <div className="mb-8">
                 <label className="block text-main-green text-sm font-bold mb-2">Role</label>
@@ -237,7 +236,7 @@ const Adduser = () => {
                   name="Role"
                   value={userData.Role}
                   onChange={handleInputChange}
-                  className="appearance-none block w-full bg-white text-gray-700 border border-white shadow-light-honey shadow-md rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4"
+                  className="appearance-none block w-full bg-white text-gray-700 border border-white shadow-md rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4"
                 >
                   <option value="">Select Role</option>
                   {roleOptions.map((role, index) => (
@@ -246,7 +245,7 @@ const Adduser = () => {
                 </select>
               </div>
               <div className='items-center justify-center self-center'>
-                <button type="submit" className="self-center bg-main-honey shadow-light-honey shadow-md hover:bg-light-honey text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ">Add User</button>
+                <button type="submit" className="self-center bg-main-honey shadow-md hover:bg-light-honey text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ">Add User</button>
               </div>
             </form>
             {showAlert && (
