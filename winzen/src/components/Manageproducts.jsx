@@ -92,19 +92,24 @@ const ManageProducts = () => {
   };
 
   const handleRemoveProduct = async (productId) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        const db = getDatabase(app);
-        const productRef = ref(db, `products/${productId}`);
-        await remove(productRef);
-        await deleteIndexedDB('products', productId);
-        setProducts(prev => prev.filter(product => product.id !== productId));
-        setFilteredProducts(prev => prev.filter(product => product.id !== productId));
-      } catch (error) {
-        console.error('Error removing product:', error);
+    Modal.confirm({
+      title: "Are you sure you want to delete this product?",
+      onOk: async () => {
+        try {
+          const db = getDatabase(app);
+          const productRef = ref(db, `products/${productId}`);
+          await remove(productRef);
+          await deleteIndexedDB('products', productId);
+          setProducts(prev => prev.filter(product => product.id !== productId));
+          setFilteredProducts(prev => prev.filter(product => product.id !== productId));
+          message.success('Product deleted successfully');
+        } catch (error) {
+          message.error('Error removing product');
+          console.error('Error removing product:', error);
+        }
       }
-    }
-  };
+    });
+  };  
 
   const handleUpdateProduct = () => {
     Modal.confirm({
@@ -230,7 +235,7 @@ const ManageProducts = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSelectedProduct((prev) => ({ ...prev, [name]: value }));
-  };
+  }; 
 
   const availableTemperatures = ['hot', 'iced'];
   const existingTemperatures = selectedProduct?.Variations.temperature ? Object.keys(selectedProduct.Variations.temperature) : [];
@@ -481,24 +486,14 @@ const ManageProducts = () => {
         shape="circle" 
         icon={<PlusOutlined style={{ fontSize: '32px' }} />} // Adjust icon size if necessary
         size="large" 
-        className="fixed bottom-10 right-10 flex items-center justify-center text-lg bg-main-green border-0 shadow-lg" // Removed width and height
-        style={{ width: '60px', height: '60px', borderColor: 'transparent', backgroundColor: '#203B36', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', }}
+        className="fixed bottom-10 right-10 flex items-center justify-center text-lg bg-main-honey border-0 shadow-lg" // Removed width and height
+        style={{ width: '60px', height: '60px', borderColor: 'transparent', backgroundColor: '#DDB04B', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', }}
         onClick={() => setShowAddProductModal(true)} 
       />
-
-      <Row gutter={[24, 32]}>
-        {filteredProducts.map((product, index) => (
-          <Col span={8} key={index}>
-            <Card title={product.Name}>
-              {/* Product details */}
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
+      
       {/* Add Product Modal */}
       <AddProducts 
-        open={showAddProductModal} 
+        open={showAddProductModal}
         onClose={() => setShowAddProductModal(false)} 
       />
     </div>

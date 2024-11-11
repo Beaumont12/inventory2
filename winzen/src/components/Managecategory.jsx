@@ -211,7 +211,7 @@ const Managecategory = () => {
           icon={<PlusOutlined style={{ fontSize: '32px' }} />} // Adjust icon size if necessary
           size="large" 
           className="fixed bottom-10 right-10 flex items-center justify-center text-lg bg-main-green border-0 shadow-lg" // Removed width and height
-          style={{ width: '60px', height: '60px', borderColor: 'transparent', backgroundColor: '#203B36', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', }} // Explicitly set width, height, and remove border
+          style={{ width: '60px', height: '60px', borderColor: 'transparent', backgroundColor: '#DDB04B', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', }} // Explicitly set width, height, and remove border
           onClick={() => setAddModalOpen(true)}
         />
 
