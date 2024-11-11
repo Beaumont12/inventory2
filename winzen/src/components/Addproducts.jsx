@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Form, Input, Select, Button, Upload, message } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { getDatabase, ref, set, push, get } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ReactCropper from 'react-easy-crop';
@@ -96,77 +96,100 @@ const AddProductModal = ({ open, onClose }) => {
   const handleSubmit = async (values) => {
     const { name, description, category, variations, price } = values;
     const db = getDatabase();
-
-    // Get current product count from the database
-    const productCountRef = ref(db, 'productCount');
-    const snapshot = await get(productCountRef);
-
-    // Increment product count
-    let productCount = 1;
-    if (snapshot.exists()) {
-      productCount = snapshot.val() + 1;  // Increment the current product count
-    }
-
-    // Set the new product count in the database
-    await set(productCountRef, productCount); // Save the incremented productCount
-
-    const newProductId = `Product${productCount}`; // Generate new product ID based on incremented productCount
-
-    if (!croppedImageUrl) {
-      message.error('Failed to upload image');
-      return;
-    }
-
-    try {
-      // Prepare the base product data structure
-      const productData = {
-        Name: name,
-        Description: description,
-        Category: category,
-        imageURL: croppedImageUrl,
-        stockStatus: 'In Stock', // Set default stock status
-      };
-
-      if (productType === 'pastry') {
-        // For pastries, we only have a single price in variations
-        productData.Variations = {
-          price: Number(price), // Ensure price is a number
-        };
-      } else if (productType === 'drink') {
-        // For drinks, variations have temperature, size, and price
-        const formattedVariations = {
-          temperature: {} // Structure to hold variations by temperature
-        };
-
-        // Process each variation provided by the user
-        variations.forEach((variation) => {
-          const { temperature, size, price } = variation;
-
-          // If this temperature hasn't been added, initialize it
-          if (!formattedVariations.temperature[temperature]) {
-            formattedVariations.temperature[temperature] = {}; // Create temperature level (hot/iced)
+  
+    // Confirmation Modal
+    Modal.confirm({
+      title: 'Are you sure you want to add this product?',
+      content: (
+        <>
+          <p><strong>Name: {name}</strong></p>
+          <p><strong>Category:</strong> {category}</p>
+          <p><strong>Description:</strong> {description}</p>
+          <p><strong>Price:</strong> {productType === 'pastry' ? price : variations.map(v => `${v.temperature} - ${v.size}: $${v.price}`).join(', ')}</p>
+        </>
+      ),
+      onOk: async () => {
+        // Proceed with submitting the product data if confirmed
+        const productCountRef = ref(db, 'productCount');
+        const snapshot = await get(productCountRef);
+  
+        // Increment product count
+        let productCount = 1;
+        if (snapshot.exists()) {
+          productCount = snapshot.val() + 1;  // Increment the current product count
+        }
+  
+        // Set the new product count in the database
+        await set(productCountRef, productCount); // Save the incremented productCount
+  
+        const newProductId = `Product${productCount}`; // Generate new product ID based on incremented productCount
+  
+        if (!croppedImageUrl) {
+          message.error('Failed to upload image');
+          return;
+        }
+  
+        try {
+          // Prepare the base product data structure
+          const productData = {
+            Name: name,
+            Description: description,
+            Category: category,
+            imageURL: croppedImageUrl,
+            stockStatus: 'In Stock', // Set default stock status
+          };
+  
+          if (productType === 'pastry') {
+            // For pastries, we only have a single price in variations
+            productData.Variations = {
+              price: Number(price), // Ensure price is a number
+            };
+          } else if (productType === 'drink') {
+            // For drinks, variations have temperature, size, and price
+            const formattedVariations = {
+              temperature: {} // Structure to hold variations by temperature
+            };
+  
+            // Process each variation provided by the user
+            variations.forEach((variation) => {
+              const { temperature, size, price } = variation;
+  
+              // If this temperature hasn't been added, initialize it
+              if (!formattedVariations.temperature[temperature]) {
+                formattedVariations.temperature[temperature] = {}; // Create temperature level (hot/iced)
+              }
+  
+              // Assign price for a specific size under the respective temperature
+              formattedVariations.temperature[temperature][size] = Number(price); // Ensure price is a number
+            });
+  
+            productData.Variations = formattedVariations;
           }
-
-          // Assign price for a specific size under the respective temperature
-          formattedVariations.temperature[temperature][size] = Number(price); // Ensure price is a number
-        });
-
-        productData.Variations = formattedVariations;
+  
+          // Set the product data in Firebase with the correct ID
+          await set(ref(db, `products/${newProductId}`), productData);
+  
+          message.success('Product added successfully');
+          form.resetFields();
+          setImageFile(null);
+          setCroppedImageUrl(null);
+          onClose();
+        } catch (error) {
+          console.error("Error adding product:", error);
+          message.error('Failed to add product');
+        }
+      },
+      onCancel() {
+        message.info('Product addition was canceled.');
       }
-
-      // Set the product data in Firebase with the correct ID
-      await set(ref(db, `products/${newProductId}`), productData);
-
-      message.success('Product added successfully');
-      form.resetFields();
-      setImageFile(null);
-      setCroppedImageUrl(null);
-      onClose();
-    } catch (error) {
-      console.error("Error adding product:", error);
-      message.error('Failed to add product');
-    }
+    });
   };
+
+  const handleCancelModal = () => {
+    message.info('Add Product modal closed without saving.');
+    onClose(); // Close the modal after showing the message
+  };
+  
 
   const filteredCategories = productType === 'pastry'
     ? categories.filter(category => category.Name === 'Pastry')
@@ -178,7 +201,7 @@ const AddProductModal = ({ open, onClose }) => {
       open={open}
       onCancel={onClose}
       footer={[
-        <Button key="cancel" onClick={onClose}>Cancel</Button>,
+        <Button key="cancel" onClick={handleCancelModal}>Cancel</Button>,
         <Button key="submit" type="primary" onClick={() => form.submit()}>Add Product</Button>
       ]}
     >
@@ -216,7 +239,23 @@ const AddProductModal = ({ open, onClose }) => {
         </Form.Item>
 
         {productType === 'drink' ? (
-          <Form.List name="variations">
+          <Form.List
+            name="variations"
+            rules={[
+              {
+                validator: async (_, variations) => {
+                  if (!variations || variations.length === 0) {
+                    return Promise.reject(new Error('At least one variation is required'));
+                  }
+                  for (let i = 0; i < variations.length; i++) {
+                    if (!variations[i].temperature || !variations[i].size || !variations[i].price) {
+                      return Promise.reject(new Error('Please fill all fields for each variation'));
+                    }
+                  }
+                },
+              },
+            ]}
+          >
             {(fields, { add, remove }) => (
               <>
                 {fields.map(({ key, name, fieldKey }) => (
@@ -245,7 +284,7 @@ const AddProductModal = ({ open, onClose }) => {
                       <Input placeholder="Price" type="number" />
                     </Form.Item>
 
-                    <Button danger onClick={() => remove(name)} icon={<PlusOutlined />} />
+                    <Button danger onClick={() => remove(name)} icon={<DeleteOutlined />} />
                   </div>
                 ))}
                 <Button type="dashed" icon={<PlusOutlined />} onClick={() => add()} className='w-full mb-4'>
@@ -266,10 +305,10 @@ const AddProductModal = ({ open, onClose }) => {
           </Form.Item>
         )}
 
-        <Form.Item label="Product Image" name="image">
+        <Form.Item label="Product Image" name="image" rules={[{ required: true, message: 'Please upload an image' }]}>
           <Upload
             accept="image/*"
-            showUploadList={false}
+            showUploadList={true}
             beforeUpload={(file) => false}
             onChange={handleImageChange}
             listType="picture-card"

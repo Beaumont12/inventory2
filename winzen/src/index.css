@@ -30,3 +30,10 @@ body {
 .shadow-bottom {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* X-offset, Y-offset, Blur radius, Color */
   }  
+
+  .custom-select .ant-select-selector {
+    border-radius: 8px !important; /* Ensure the radius is applied */
+    border: 2px solid #DDB04B; /* Optional: Add a custom border */
+    padding: 4px; /* Adjust padding for aesthetics */
+  }
+  

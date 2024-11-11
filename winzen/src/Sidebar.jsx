@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BsArrowLeftShort, BsBox2Fill, BsSearch, BsChevronDown, BsCartCheckFill, BsCartPlusFill } from "react-icons/bs";
-import { TbShoppingCartCog, TbServerCog, TbUserCog, TbHistory, } from "react-icons/tb";
+import { TbShoppingCartCog, TbServerCog, TbUserCog, TbHistory, TbBox, TbClipboardList, TbToolsKitchen3, TbExternalLink,  } from "react-icons/tb";
 import { GiThreeLeaves } from "react-icons/gi";
 import { RiDashboardFill } from "react-icons/ri";
 import { IoMdAnalytics } from "react-icons/io";
@@ -22,6 +22,7 @@ import Inventory from './components/inventory/Inventory';
 import Manageuser from './components/Manageuser';
 import Adduser from './components/Adduser';
 import External from './components/inventory/External';
+import StockHistory from './components/inventory/StockHistory';
 
 const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
     const [open, setOpen] = useState(false);
@@ -67,11 +68,12 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
             spacing: true,
             submenu: true,
             path: "/stocks",
-            icon: <BsBox2Fill />,
+            icon: <TbBox />,
             submenuItems: [
-                { title: "Ingredients", path: "/submenu1", roles: ["Admin", "Super Admin"] }, 
-                { title: "Utensils", path: "/submenu2", roles: ["Admin", "Super Admin"] }, 
-                { title: "External", path: "/submenu3", roles: ["Admin", "Super Admin"] },
+                { title: "Ingredients", path: "/submenu1", roles: ["Admin", "Super Admin"], icon: <TbClipboardList />  }, 
+                { title: "Utensils", path: "/submenu2", roles: ["Admin", "Super Admin"], icon: <TbToolsKitchen3 /> }, 
+                { title: "External", path: "/submenu3", roles: ["Admin", "Super Admin"], icon: <TbExternalLink /> },
+                { title: "Stock History", path: "/submenu4", roles: ["Admin", "Super Admin"], icon: <TbHistory /> },
             ], roles: ["Admin", "Super Admin"]
         },
         { title: "Transactions", path: "/transactions", spacing: true, icon: <TbHistory />, roles: ["Admin", "Super Admin"] },
@@ -160,7 +162,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
                                                         isActive ? "text-main-honey" : "text-gray-300 hover:bg-light-white"
                                                     }`
                                                 }>
-                                                <span className='text-2xl block float-left'>{menu.icon ? menu.icon : <RiDashboardFill />}</span>
+                                                <span className='text-2xl block float-left'>{submenuItem.icon}</span>
                                                 <span>{submenuItem.title}</span>
                                             </NavLink>
                                         </li>
@@ -185,7 +187,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
                     <Route path="/submenu1" element={<Ingredients />} />
                     <Route path="/submenu2" element={<Utensils />} />
                     <Route path="/submenu3" element={<External/>} />
-                    <Route path="/submenu4" element={<div>Submenu 4 Page</div>} />
+                    <Route path="/submenu4" element={<StockHistory/>} />
                     <Route path="/transactions" element={<History />} />
                     <Route path="/sales-report" element={<Overallsale />} />
                     <Route path="/manage-users" element={<Manageuser />} />

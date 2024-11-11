@@ -92,19 +92,24 @@ const ManageProducts = () => {
   };
 
   const handleRemoveProduct = async (productId) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        const db = getDatabase(app);
-        const productRef = ref(db, `products/${productId}`);
-        await remove(productRef);
-        await deleteIndexedDB('products', productId);
-        setProducts(prev => prev.filter(product => product.id !== productId));
-        setFilteredProducts(prev => prev.filter(product => product.id !== productId));
-      } catch (error) {
-        console.error('Error removing product:', error);
+    Modal.confirm({
+      title: "Are you sure you want to delete this product?",
+      onOk: async () => {
+        try {
+          const db = getDatabase(app);
+          const productRef = ref(db, `products/${productId}`);
+          await remove(productRef);
+          await deleteIndexedDB('products', productId);
+          setProducts(prev => prev.filter(product => product.id !== productId));
+          setFilteredProducts(prev => prev.filter(product => product.id !== productId));
+          message.success('Product deleted successfully');
+        } catch (error) {
+          message.error('Error removing product');
+          console.error('Error removing product:', error);
+        }
       }
-    }
-  };
+    });
+  };  
 
   const handleUpdateProduct = () => {
     Modal.confirm({
@@ -113,124 +118,131 @@ const ManageProducts = () => {
       onOk: async () => {
         if (selectedProduct) {
           const updatedProduct = { ...selectedProduct };
-
-        console.log("Initial selectedProduct:", selectedProduct);
-        console.log("Cloned updatedProduct:", updatedProduct);
-        console.log("New Temperature:", newTemperature);
-        console.log("New Size:", newSize);
-        console.log("New Price:", newPrice);
- 
-        if (updatedProduct.Category === 'Pastry') {
-          if (newPrice) {
-            const priceNumber = parseFloat(newPrice);
-            if (isNaN(priceNumber)) {
-              message.error('Please enter a valid number for the price.');
-              return;
-            }
-            updatedProduct.Variations.price = priceNumber;
-            console.log("Updated pastry price:", updatedProduct.Variations.price);
+  
+          console.log("Initial selectedProduct:", selectedProduct);
+          console.log("Cloned updatedProduct:", updatedProduct);
+          console.log("New Temperature:", newTemperature);
+          console.log("New Size:", newSize);
+          console.log("New Price:", newPrice);
+  
+          // Ensure stockStatus is updated
+          if (selectedProduct.stockStatus) {
+            updatedProduct.stockStatus = selectedProduct.stockStatus;
+            console.log("Updated stock status:", updatedProduct.stockStatus);
           }
-        } else { 
-          if (!updatedProduct.Variations) {
-            updatedProduct.Variations = { temperature: {} };
-          }
- 
-          if (newTemperature && newSize && newPrice) {
-            const priceNumber = parseFloat(newPrice);
-            if (isNaN(priceNumber)) {
-              message.error('Please enter a valid number for the price.');
-              return;
-            }
- 
-            if (!updatedProduct.Variations.temperature[newTemperature]) {
-              updatedProduct.Variations.temperature[newTemperature] = {
-                [newSize]: priceNumber,
-              };
-              console.log(`Added new temperature "${newTemperature}" with size and price:`, updatedProduct.Variations.temperature[newTemperature]);
-            } else {
-              console.log(`Temperature "${newTemperature}" already exists. Skipping creation.`);
+  
+          if (updatedProduct.Category === 'Pastry') {
+            if (newPrice) {
+              const priceNumber = parseFloat(newPrice);
+              if (isNaN(priceNumber)) {
+                message.error('Please enter a valid number for the price.');
+                return;
+              }
+              updatedProduct.Variations.price = priceNumber;
+              console.log("Updated pastry price:", updatedProduct.Variations.price);
             }
           } else {
-            console.log("Conditions for adding a new temperature not met.");
-          }
- 
-          if (selectedTemperature && newSize && newPrice) {
-            const priceNumber = parseFloat(newPrice);
-            if (isNaN(priceNumber)) {
-              message.error('Please enter a valid number for the price.');
-              return;
+            if (!updatedProduct.Variations) {
+              updatedProduct.Variations = { temperature: {} };
             }
-
-            if (!updatedProduct.Variations.temperature[selectedTemperature]) {
-              updatedProduct.Variations.temperature[selectedTemperature] = {};
-            }
- 
-            updatedProduct.Variations.temperature[selectedTemperature][newSize] = priceNumber;
-            console.log(`Added new size and price to existing temperature "${selectedTemperature}":`, updatedProduct.Variations.temperature[selectedTemperature]);
-          }
- 
-          const temperaturesToRemoveSizes = Object.keys(updatedProduct.Variations.temperature);
-          temperaturesToRemoveSizes.forEach(temp => { 
-            const sizesToRemove = Object.keys(selectedProduct.Variations.temperature[temp]).filter(size => {
-              return !(size in updatedProduct.Variations.temperature[temp]);
-            });
-            sizesToRemove.forEach(size => {
-              delete updatedProduct.Variations.temperature[temp][size];
-            });
-          });
- 
-          const allSizes = Object.entries(updatedProduct.Variations.temperature).flatMap(([_, sizes]) => Object.keys(sizes));
-          if (allSizes.length === 0) {
-            alert('Cannot remove all sizes. At least one size must remain.'); 
-            Object.keys(selectedProduct.Variations.temperature).forEach(temp => {
-              updatedProduct.Variations.temperature[temp] = { ...selectedProduct.Variations.temperature[temp] };
-            });
-          }
- 
-          Object.keys(updatedProduct.Variations.temperature).forEach(temp => {
-            Object.keys(updatedProduct.Variations.temperature[temp]).forEach(size => {
-              const priceInput = parseFloat(updatedProduct.Variations.temperature[temp][size]) || '';
-              if (!isNaN(priceInput)) {
-                updatedProduct.Variations.temperature[temp][size] = priceInput;
+  
+            if (newTemperature && newSize && newPrice) {
+              const priceNumber = parseFloat(newPrice);
+              if (isNaN(priceNumber)) {
+                message.error('Please enter a valid number for the price.');
+                return;
               }
+  
+              if (!updatedProduct.Variations.temperature[newTemperature]) {
+                updatedProduct.Variations.temperature[newTemperature] = {
+                  [newSize]: priceNumber,
+                };
+                console.log(`Added new temperature "${newTemperature}" with size and price:`, updatedProduct.Variations.temperature[newTemperature]);
+              } else {
+                console.log(`Temperature "${newTemperature}" already exists. Skipping creation.`);
+              }
+            } else {
+              console.log("Conditions for adding a new temperature not met.");
+            }
+  
+            if (selectedTemperature && newSize && newPrice) {
+              const priceNumber = parseFloat(newPrice);
+              if (isNaN(priceNumber)) {
+                message.error('Please enter a valid number for the price.');
+                return;
+              }
+  
+              if (!updatedProduct.Variations.temperature[selectedTemperature]) {
+                updatedProduct.Variations.temperature[selectedTemperature] = {};
+              }
+  
+              updatedProduct.Variations.temperature[selectedTemperature][newSize] = priceNumber;
+              console.log(`Added new size and price to existing temperature "${selectedTemperature}":`, updatedProduct.Variations.temperature[selectedTemperature]);
+            }
+  
+            const temperaturesToRemoveSizes = Object.keys(updatedProduct.Variations.temperature);
+            temperaturesToRemoveSizes.forEach(temp => {
+              const sizesToRemove = Object.keys(selectedProduct.Variations.temperature[temp]).filter(size => {
+                return !(size in updatedProduct.Variations.temperature[temp]);
+              });
+              sizesToRemove.forEach(size => {
+                delete updatedProduct.Variations.temperature[temp][size];
+              });
             });
-          });
-          console.log("Final updated variations:", updatedProduct.Variations);
+  
+            const allSizes = Object.entries(updatedProduct.Variations.temperature).flatMap(([_, sizes]) => Object.keys(sizes));
+            if (allSizes.length === 0) {
+              alert('Cannot remove all sizes. At least one size must remain.');
+              Object.keys(selectedProduct.Variations.temperature).forEach(temp => {
+                updatedProduct.Variations.temperature[temp] = { ...selectedProduct.Variations.temperature[temp] };
+              });
+            }
+  
+            Object.keys(updatedProduct.Variations.temperature).forEach(temp => {
+              Object.keys(updatedProduct.Variations.temperature[temp]).forEach(size => {
+                const priceInput = parseFloat(updatedProduct.Variations.temperature[temp][size]) || '';
+                if (!isNaN(priceInput)) {
+                  updatedProduct.Variations.temperature[temp][size] = priceInput;
+                }
+              });
+            });
+            console.log("Final updated variations:", updatedProduct.Variations);
+          }
+  
+          console.log("Final updatedProduct before database update:", updatedProduct);
+  
+          const db = getDatabase(app);
+          const productRef = ref(db, `products/${selectedProduct.id}`);
+  
+          try {
+            await set(productRef, updatedProduct); // Ensure this is awaited
+            await setIndexedDB('products', selectedProduct.id, updatedProduct);
+  
+            setNewSize('');
+            setNewTemperature('');
+            setNewPrice('');
+  
+            message.success(`${updatedProduct.Name} has been successfully updated.`);
+            setShowModal(false);
+  
+            // Call fetchData to reload the products
+            await fetchData();
+          } catch (error) {
+            console.error("Error updating product:", error);
+            message.error('Failed to update product. Please try again.');
+          }
         }
- 
-        console.log("Final updatedProduct before database update:", updatedProduct);
- 
-        const db = getDatabase(app);
-        const productRef = ref(db, `products/${selectedProduct.id}`);
-        
-        try {
-          await set(productRef, updatedProduct); // Ensure this is awaited
-          await setIndexedDB('products', selectedProduct.id, updatedProduct);
- 
-          setNewSize('');
-          setNewTemperature('');
-          setNewPrice('');
-
-          message.success(`${updatedProduct.Name} has been successfully updated.`);
-          setShowModal(false); 
-
-          // Call fetchData to reload the products
-          await fetchData();  
-        } catch (error) {
-          console.error("Error updating product:", error);
-          message.error('Failed to update product. Please try again.');
-        }
-      }
-    },
+      },
       onCancel: () => {
         message.info('Update canceled.');
       },
     });
   };
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSelectedProduct((prev) => ({ ...prev, [name]: value }));
-  };
+  }; 
 
   const availableTemperatures = ['hot', 'iced'];
   const existingTemperatures = selectedProduct?.Variations.temperature ? Object.keys(selectedProduct.Variations.temperature) : [];
@@ -326,16 +338,40 @@ const ManageProducts = () => {
       </Row>
 
       {selectedProduct && (
-        <Modal open={showModal} onCancel={() => setShowModal(false)} title={`Edit ${selectedProduct.Name}`}
+        <Modal 
+          open={showModal} 
+          onCancel={() => setShowModal(false)} 
+          title={`Edit ${selectedProduct.Name}`}
           footer={[
             <Button key="cancel" onClick={() => setShowModal(false)}>Cancel</Button>,
             <Button key="submit" type="primary" onClick={handleUpdateProduct}>Save Changes</Button>,
-          ]} >
+          ]}
+        >
+          {/* Name and Category - Disabled Fields */}
           <Input addonBefore="Name" value={selectedProduct?.Name || ''} disabled style={{ marginBottom: '1rem' }} />
           <Input addonBefore="Category" value={selectedProduct?.Category || ''} disabled style={{ marginBottom: '1rem' }} />
 
+          {/* Stock Status Dropdown */}
+          <Select 
+            addonBefore="Stock Status" 
+            value={selectedProduct?.stockStatus || 'In Stock'}
+            onChange={(value) =>
+              setSelectedProduct((prev) => ({
+                ...prev,
+                stockStatus: value,
+              }))
+            }
+            style={{ width: '100%', marginBottom: '1rem' }}
+          >
+            <Select.Option value="In Stock">In Stock</Select.Option>
+            <Select.Option value="Out of Stock">Out of Stock</Select.Option>
+          </Select>
+
           {selectedProduct?.Category === 'Pastry' ? (
-            <Input addonBefore="Price" value={selectedProduct?.Variations?.price || ''}
+            // For Pastry: Edit Price Only
+            <Input
+              addonBefore="Price"
+              value={selectedProduct?.Variations?.price || ''}
               onChange={(e) => {
                 const updatedPrice = parseFloat(e.target.value);
                 setSelectedProduct((prev) => ({
@@ -346,15 +382,21 @@ const ManageProducts = () => {
                   },
                 }));
               }}
-              style={{ marginBottom: '1rem' }} />
+              style={{ marginBottom: '1rem' }}
+            />
           ) : (
             <>
-              <Input addonBefore="Description" value={selectedProduct?.Description || ''}
+              {/* Description Editing */}
+              <Input
+                addonBefore="Description"
+                value={selectedProduct?.Description || ''}
                 onChange={(e) =>
                   handleInputChange({ target: { name: 'Description', value: e.target.value } })
                 }
-                style={{ marginBottom: '1rem' }} />
+                style={{ marginBottom: '1rem' }}
+              />
 
+              {/* Temperature and Size Variations */}
               {selectedProduct?.Variations.temperature &&
                 Object.keys(selectedProduct.Variations.temperature).map((temp) => (
                   <div key={temp} className="mb-2">
@@ -365,7 +407,9 @@ const ManageProducts = () => {
                       {Object.entries(selectedProduct.Variations.temperature[temp]).map(
                         ([size, price]) => (
                           <div className="flex items-center" key={size} style={{ marginBottom: '1rem' }}>
-                            <Input addonBefore={size} value={price}
+                            <Input
+                              addonBefore={size}
+                              value={price}
                               onChange={(e) => {
                                 const updatedTemperature = { ...selectedProduct.Variations.temperature };
                                 updatedTemperature[temp][size] = parseFloat(e.target.value) || '';
@@ -377,16 +421,21 @@ const ManageProducts = () => {
                                   },
                                 }));
                               }}
-                              style={{ flex: 1, marginRight: '8px' }} />
-                            <DeleteOutlined 
+                              style={{ flex: 1, marginRight: '8px' }}
+                            />
+                            <DeleteOutlined
                               onClick={() => {
                                 const updatedTemperature = { ...selectedProduct.Variations.temperature };
                                 delete updatedTemperature[temp][size];
-                                 
-                                const remainingSizes = Object.keys(updatedTemperature).flatMap(t => Object.keys(updatedTemperature[t]));
+
+                                const remainingSizes = Object.keys(updatedTemperature).flatMap((t) =>
+                                  Object.keys(updatedTemperature[t])
+                                );
                                 if (remainingSizes.length === 0) {
-                                  message.error('Cannot delete the last size. At least one size must remain.'); 
-                                  updatedTemperature[temp][size] = price;  
+                                  message.error(
+                                    'Cannot delete the last size. At least one size must remain.'
+                                  );
+                                  updatedTemperature[temp][size] = price;
                                   return;
                                 }
 
@@ -397,8 +446,9 @@ const ManageProducts = () => {
                                     temperature: updatedTemperature,
                                   },
                                 }));
-                              }} 
-                              style={{ cursor: 'pointer', color: 'red' }} />
+                              }}
+                              style={{ cursor: 'pointer', color: 'red' }}
+                            />
                           </div>
                         )
                       )}
@@ -406,70 +456,37 @@ const ManageProducts = () => {
                   </div>
                 ))}
 
-              {/* Button to add new size/price to existing temperature */}
-              <Button type="dashed" 
+              {/* Add New Size & Temperature Buttons */}
+              <Button
+                type="dashed"
                 onClick={() => {
                   setAddNewSize(true);
                   setAddNewTemperature(false);
                 }}
-                style={{ width: '100%', marginBottom: '1rem' }} > Add New Size & Price to Existing Temperature
+                style={{ width: '100%', marginBottom: '1rem' }}
+              >
+                Add New Size & Price to Existing Temperature
               </Button>
-
-              {/* Conditional button to add a new temperature if one is missing */}
-              {!addNewTemperature && ['hot', 'iced'].some(temp => !(temp in selectedProduct.Variations.temperature)) && (
-                <Button type="dashed" 
-                  onClick={() => {
-                    const availableTemp = ['hot', 'iced'].find(temp => !(temp in selectedProduct.Variations.temperature));
-                    if (availableTemp) {
-                      setAvailableNewTemperature(availableTemp);
-                      setNewTemperature(availableTemp); 
-                      setAddNewTemperature(true); 
-                      setAddNewSize(false); 
-                    }
-                  }}
-                  style={{ width: '100%', marginBottom: '1rem' }} > Add New Temperature with Size & Price
-                </Button>
-              )}
-
-              {/* Conditional rendering for adding a new size and price to existing temperature */}
-              {addNewSize && (
-                <>
-                  <Select placeholder="Select Temperature" value={selectedTemperature} onChange={(value) => setSelectedTemperature(value)} style={{ width: '100%', marginBottom: '1rem' }} >
-                    {Object.keys(selectedProduct.Variations.temperature || {}).map((temp) => (
-                      <Option key={temp} value={temp}>
-                        {temp.charAt(0).toUpperCase() + temp.slice(1)}
-                      </Option>
-                    ))}
-                  </Select>
-                  <Row gutter={16} style={{ marginBottom: '1rem' }}>
-                    <Col span={12}>
-                      <Input addonBefore="New Size" value={newSize} onChange={(e) => setNewSize(e.target.value)} />
-                    </Col>
-                    <Col span={12}>
-                      <Input addonBefore="New Price" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} />
-                    </Col>
-                  </Row>
-                </>
-              )}
-
-              {/* Conditional rendering for adding a new temperature with initial size and price */}
-              {addNewTemperature && availableNewTemperature && (
-                <>
-                  <Select placeholder="New Temperature" value={availableNewTemperature} disabled style={{ width: '100%', marginBottom: '1rem' }} >
-                    <Option value={availableNewTemperature}>
-                      {availableNewTemperature.charAt(0).toUpperCase() + availableNewTemperature.slice(1)}
-                    </Option>
-                  </Select>
-                  <Row gutter={16} style={{ marginBottom: '1rem' }}>
-                    <Col span={12}>
-                      <Input addonBefore="Initial Size" value={newSize} onChange={(e) => setNewSize(e.target.value)} />
-                    </Col>
-                    <Col span={12}>
-                      <Input  addonBefore="Initial Price" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} />
-                    </Col>
-                  </Row>
-                </>
-              )}
+              {!addNewTemperature &&
+                ['hot', 'iced'].some((temp) => !(temp in selectedProduct.Variations.temperature)) && (
+                  <Button
+                    type="dashed"
+                    onClick={() => {
+                      const availableTemp = ['hot', 'iced'].find(
+                        (temp) => !(temp in selectedProduct.Variations.temperature)
+                      );
+                      if (availableTemp) {
+                        setAvailableNewTemperature(availableTemp);
+                        setNewTemperature(availableTemp);
+                        setAddNewTemperature(true);
+                        setAddNewSize(false);
+                      }
+                    }}
+                    style={{ width: '100%', marginBottom: '1rem' }}
+                  >
+                    Add New Temperature with Size & Price
+                  </Button>
+                )}
             </>
           )}
         </Modal>
@@ -481,24 +498,14 @@ const ManageProducts = () => {
         shape="circle" 
         icon={<PlusOutlined style={{ fontSize: '32px' }} />} // Adjust icon size if necessary
         size="large" 
-        className="fixed bottom-10 right-10 flex items-center justify-center text-lg bg-main-green border-0 shadow-lg" // Removed width and height
-        style={{ width: '60px', height: '60px', borderColor: 'transparent', backgroundColor: '#203B36', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', }}
+        className="fixed bottom-10 right-10 flex items-center justify-center text-lg bg-main-honey border-0 shadow-lg" // Removed width and height
+        style={{ width: '60px', height: '60px', borderColor: 'transparent', backgroundColor: '#DDB04B', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', }}
         onClick={() => setShowAddProductModal(true)} 
       />
-
-      <Row gutter={[24, 32]}>
-        {filteredProducts.map((product, index) => (
-          <Col span={8} key={index}>
-            <Card title={product.Name}>
-              {/* Product details */}
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
+      
       {/* Add Product Modal */}
       <AddProducts 
-        open={showAddProductModal} 
+        open={showAddProductModal}
         onClose={() => setShowAddProductModal(false)} 
       />
     </div>

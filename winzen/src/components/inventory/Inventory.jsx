@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Col, Row, Table, Button } from 'antd';
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { getDatabase, ref, get, onValue, off } from 'firebase/database';
+import { Card, Col, Row, Table, Button, Select, DatePicker, Input } from 'antd';
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { getDatabase, ref, onValue, off } from 'firebase/database';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
+
+const { RangePicker } = DatePicker;
 
 const Inventory = () => {
   const [stockHistory, setStockHistory] = useState([]);
@@ -11,7 +13,7 @@ const Inventory = () => {
     totalProducts: 0,
     totalStock: 0,
     lowStockItems: 0,
-    outOfStockItems: 0, 
+    outOfStockItems: 0,
   });
   const [stockTrendData, setStockTrendData] = useState([]);
   const [stockActionsSummary, setStockActionsSummary] = useState({
@@ -20,6 +22,12 @@ const Inventory = () => {
     restocked: 0,
     ordered: 0,
     removed: 0,
+  });
+  const [filters, setFilters] = useState({
+    action: '',
+    product: '',
+    dateRange: null,
+    stockStatus: '',
   });
 
   const db = getDatabase();
@@ -46,51 +54,103 @@ const Inventory = () => {
   useEffect(() => {
     const fetchData = () => {
       try {
+        console.log("Fetching stock history and stock summary...");
+        
         const historyRef = ref(db, 'stocksHistory');
-      
+        const ingredientsRef = ref(db, 'stocks/Ingredients');
+        const utensilsRef = ref(db, 'stocks/Utensils');
+    
+        // Fetch history and filter based on the current filters
         onValue(historyRef, (snapshot) => {
           let historyArray = [];
           let decreased = 0, added = 0, restocked = 0, ordered = 0, removed = 0;
           let groupedTrendData = {};
-  
+        
           if (snapshot.exists()) {
             const historyData = snapshot.val();
+            console.log("History data fetched: ", historyData);
+            
             historyArray = Object.entries(historyData).map(([id, item]) => {
               const action = item.Actions.toLowerCase();
               const quantity = item.Quantity;
-  
+              const date = item.Date; // Keep date as a string (YYYY-MM-DD)
+        
+              console.log(`Processing item: ${item.ItemName}, Action: ${action}, Quantity: ${quantity}, Date: ${date}`);
+        
+              // Filtering based on the selected filter values
+              let matchFilters = true;
+        
+              // Action filter
+              if (filters.action && !action.includes(filters.action)) {
+                matchFilters = false;
+                console.log(`Filter mismatch on action: ${filters.action}`);
+              }
+        
+              // Product filter
+              if (filters.product && !item.ItemName.toLowerCase().includes(filters.product.toLowerCase().trim())) {
+                matchFilters = false;
+                console.log(`Filter mismatch on product: ${filters.product}`);
+              }
+        
+              // Stock status filter
+              if (filters.stockStatus && getStockStatus(item.Quantity).status !== filters.stockStatus) {
+                matchFilters = false;
+                console.log(`Filter mismatch on stock status: ${filters.stockStatus}`);
+              }
+        
+              // Date filter (ensure date is in correct format for comparison)
+              if (filters.dateRange) {
+                const [startDate, endDate] = filters.dateRange;
+                const itemDate = date; // Use string date directly
+                const isInRange = itemDate >= startDate.format('YYYY-MM-DD') && itemDate <= endDate.format('YYYY-MM-DD');
+                if (!isInRange) {
+                  matchFilters = false;
+                }
+              } else {
+                console.log("No valid date range selected");
+              }
+        
+              if (!matchFilters) {
+                return null; // Skip this item if it doesn't match the filters
+              }
+        
+              // Track stock actions
               if (quantity < 0) decreased += Math.abs(quantity);
               if (action.includes('added')) added += quantity;
               if (action.includes('restocked')) restocked += quantity;
               if (action.includes('ordered')) ordered += quantity;
               if (action.includes('removed')) removed += quantity;
-  
+        
               // Group stock changes by date for trend calculation
-              const day = moment(item.Date).format('YYYY-MM-DD');
-              if (!groupedTrendData[day]) groupedTrendData[day] = 0;
-              groupedTrendData[day] += item.Quantity;
-  
+              if (!groupedTrendData[date]) groupedTrendData[date] = 0;
+              groupedTrendData[date] += item.Quantity;
+        
               return {
                 id,
-                date: item.Date,
+                date, // Keep the date as a string
                 name: item.ItemName,
                 action: item.Actions,
                 quantity: item.Quantity,
               };
-            });
-  
-            historyArray.reverse();
-            setStockHistory(historyArray);
+            }).filter(item => item !== null); // Filter out null items
+        
+            console.log("Filtered stock history: ", historyArray);
+            setStockHistory(historyArray.reverse());
             setStockActionsSummary({ decreased, added, restocked, ordered, removed });
-  
-            // Prepare stock trend data for the chart
-            const trendData = Object.entries(groupedTrendData).map(([date, stock]) => ({ date, stock }));
-            setStockTrendData(trendData); // Set trend data after it's been fully processed
+        
+            // Prepare stock trend data for the chart (now grouped by date)
+            const trendData = Object.entries(groupedTrendData).map(([date, stock]) => ({
+              date,
+              stock,
+            }));
+            console.log("Stock trend data: ", trendData);
+            setStockTrendData(trendData);
+          } else {
+            console.log("No stock history data found.");
           }
         });
-  
-        // Real-time listener for stock summary
-        const ingredientsRef = ref(db, 'stocks/Ingredients');
+        
+        // Fetch stock summary (Ingredients + Utensils)
         onValue(ingredientsRef, (snapshot) => {
           let totalIngredients = 0;
           let totalStock = 0;
@@ -99,6 +159,7 @@ const Inventory = () => {
   
           if (snapshot.exists()) {
             const ingredientsData = snapshot.val();
+            console.log("Ingredients data fetched: ", ingredientsData);
   
             Object.keys(ingredientsData).forEach((category) => {
               if (!category.includes('Count')) {
@@ -109,14 +170,12 @@ const Inventory = () => {
                   if (typeof item.stocks === 'object') {
                     const wholeStock = parseInt(item.stocks.whole, 10) || 0;
                     const { status } = getStockStatus({ whole: wholeStock }, 'Cakes');
-  
                     totalStock += wholeStock * 8;
                     if (status === 'Low Stock') lowStockItems++;
                     if (wholeStock === 0) outOfStockItems++;
                   } else {
                     totalStock += parseInt(item.stocks, 10) || 0;
                     const { status } = getStockStatus(parseInt(item.stocks, 10), 'Ingredients');
-  
                     if (status === 'Low Stock') lowStockItems++;
                     if (parseInt(item.stocks, 10) === 0) outOfStockItems++;
                   }
@@ -125,7 +184,6 @@ const Inventory = () => {
             });
           }
   
-          const utensilsRef = ref(db, 'stocks/Utensils');
           onValue(utensilsRef, (snapshot) => {
             let totalUtensils = 0;
   
@@ -139,13 +197,13 @@ const Inventory = () => {
                   totalStock += stock;
   
                   const { status } = getStockStatus(stock, 'Utensils');
-  
                   if (status === 'Low Stock') lowStockItems++;
                   if (stock === 0) outOfStockItems++;
                 }
               });
             }
   
+            console.log("Updating stock summary...");
             setStockSummary({
               totalProducts: totalIngredients + totalUtensils,
               totalStock: totalStock,
@@ -154,35 +212,35 @@ const Inventory = () => {
             });
           });
         });
-  
       } catch (error) {
         console.error("Error fetching data: ", error);
       }
     };
   
-    fetchData(); // Call fetchData to start listening for changes
+    fetchData();
   
-    // Clean up listeners when the component unmounts
     return () => {
       const historyRef = ref(db, 'stocksHistory');
       const ingredientsRef = ref(db, 'stocks/Ingredients');
       const utensilsRef = ref(db, 'stocks/Utensils');
-      
-      // Use 'off' to remove listeners
       off(historyRef);
       off(ingredientsRef);
       off(utensilsRef);
     };
-  }, [db]);
+  }, [filters]);  // Dependency array includes filters to ensure the data updates whenever the filters change
 
+  const handleFilterChange = (value, filterType) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [filterType]: value
+    }));
+  };
+  
   const handleExportToExcel = () => {
     const ws = XLSX.utils.json_to_sheet(stockHistory);
     const wb = XLSX.utils.book_new();
-    
-    // Overall Stock History
     XLSX.utils.book_append_sheet(wb, ws, "StockHistory");
-  
-    // Summary for Overall
+
     const summaryData = [
       ["Action", "Quantity"],
       ["Decreased", stockActionsSummary.decreased],
@@ -191,42 +249,13 @@ const Inventory = () => {
       ["Ordered", stockActionsSummary.ordered],
       ["Removed", stockActionsSummary.removed],
     ];
-  
+
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
-  
-    // Grouping stock history by month
-    const monthlyData = {};
-    stockHistory.forEach(item => {
-      const monthYear = moment(item.date).format('YYYY-MM'); // Group by year and month
-      if (!monthlyData[monthYear]) {
-        monthlyData[monthYear] = [];
-      }
-      monthlyData[monthYear].push(item);
-    });
-  
-    // Create a sheet for each month
-    Object.entries(monthlyData).forEach(([month, data]) => {
-      const monthlyWs = XLSX.utils.json_to_sheet(data); // Create sheet for the month
-      const monthlySummaryData = [
-        ["Action", "Quantity"],
-        ["Decreased", data.reduce((acc, item) => item.quantity < 0 ? acc + Math.abs(item.quantity) : acc, 0)],
-        ["Added", data.reduce((acc, item) => item.action.includes('Added') ? acc + item.quantity : acc, 0)],
-        ["Restocked", data.reduce((acc, item) => item.action.includes('Restocked') ? acc + item.quantity : acc, 0)],
-        ["Ordered", data.reduce((acc, item) => item.action.includes('Ordered') ? acc + item.quantity : acc, 0)],
-        ["Removed", data.reduce((acc, item) => item.action.includes('Removed') ? acc + item.quantity : acc, 0)],
-      ];
-      
-      const monthlySummarySheet = XLSX.utils.aoa_to_sheet(monthlySummaryData);
-      
-      XLSX.utils.book_append_sheet(wb, monthlyWs, month); // Append the monthly sheet
-      XLSX.utils.book_append_sheet(wb, monthlySummarySheet, `${month} Summary`); // Append the monthly summary sheet
-    });
-  
-    // Finally, write the file
+
     XLSX.writeFile(wb, `StockHistory_${moment().format('YYYYMMDD')}.xlsx`);
   };
-  
+
   const columns = [
     {
       title: 'Date',
@@ -247,11 +276,6 @@ const Inventory = () => {
       title: 'Quantity',
       dataIndex: 'quantity',
       key: 'quantity',
-      render: (quantity) => (
-        <span style={{ color: quantity < 0 ? 'red' : 'green' }}>
-          {quantity < 0 ? `${quantity}` : `+${quantity}`}
-        </span>
-      ),
     },
   ];
 
@@ -261,7 +285,7 @@ const Inventory = () => {
 
       <Row gutter={16}>
         <Col span={6}>
-          <Card title="Total Items" bordered={false} className="shadow-lg bg-emerald-400 rounded-lg">
+          <Card title="Total Products" bordered={false} className="shadow-lg bg-emerald-400 rounded-lg">
             <div className="text-3xl font-semibold">{stockSummary.totalProducts}</div>
           </Card>
         </Col>
@@ -282,44 +306,58 @@ const Inventory = () => {
         </Col>
       </Row>
 
-      {/* Stock History Table */}
-      <div style={{ marginTop: '20px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: '8px', overflow: 'hidden' }}>
-        <div className='flex justify-between bg-main-green items-center p-2'>
-          <h3 className="text-xl font-semibold p-2  text-white">Stock History</h3>
-          <Button type="primary" className="rounded-lg font-bold bg-main-honey" onClick={handleExportToExcel}>Export to Excel</Button>
-        </div>
+      {/* Filters Section */}
+      <div className="mt-4 flex gap-x-4">
+        <Select
+          placeholder="Action"
+          onChange={(value) => setFilters({ ...filters, action: value })}
+          value={filters.action}
+          className="w-1/4 shadow-lg custom-select"
+        >
+          <Option value="">All Actions</Option>
+          <Option value="added">Added</Option>
+          <Option value="removed">Removed</Option>
+          <Option value="restocked">Restocked</Option>
+          <Option value="decreased">Decreased</Option>
+          <Option value="ordered">Ordered</Option>
+        </Select>
+
+        <Input
+          placeholder="Search by Product"
+          onChange={(e) => setFilters({ ...filters, product: e.target.value })}
+          value={filters.product}
+          className="w-1/4 rounded-lg shadow-lg"
+        />
+
+        <DatePicker.RangePicker
+          format="YYYY-MM-DD"
+          onChange={(dates) => handleFilterChange(dates, 'dateRange')}
+          className="shadow-lg w-1/4" // Add shadow and width to the component
+          style={{ borderRadius: '8px' }} // Add rounded corners style
+        />
         
-        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-          <Table
-            columns={columns}
-            dataSource={stockHistory}
-            rowKey={(record) => record.id}
-            pagination={false}
-          />
-        </div>
-          <div className='p-2 bg-main-green text-white'>
-            <div className='items-center justify-between flex'>
-              <p className='text-xs'>Decreased: {stockActionsSummary.decreased}</p>
-              <p className='text-xs'>Added: {stockActionsSummary.added}</p>
-              <p className='text-xs'>Restocked: {stockActionsSummary.restocked}</p>
-              <p className='text-xs'>Ordered: {stockActionsSummary.ordered}</p>
-              <p className='text-xs'>Removed: {stockActionsSummary.removed}</p>
-            </div>
-          </div>
+        <Button type="primary" onClick={handleExportToExcel} className="font-bold bg-main-honey rounded-lg shadow-lg border-none">
+          Export to Excel
+        </Button>
       </div>
 
       {/* Stock Trend Graph */}
-      <div className='shadow-lg rounded-lg shadow-slate-200 overflow-hidden mt-6'>
+      <div className="shadow-lg rounded-lg shadow-slate-200 overflow-hidden mt-6">
         <h3 className="text-xl font-semibold p-2 bg-main-green text-white">Stock Trend</h3>
         <ResponsiveContainer width="100%" height={300} className="mt-4 p-2">
           <BarChart data={stockTrendData}>
-            <Bar type="monotone" dataKey="stock" fill="#DDB04B"/>
+            <Bar type="monotone" dataKey="stock" fill="#DDB04B" />
             <CartesianGrid stroke="#ccc" />
             <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Export Button */}
+      <div className="mt-4">
+        
       </div>
     </div>
   );
