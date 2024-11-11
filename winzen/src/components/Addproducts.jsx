@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Form, Input, Select, Button, Upload, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { getDatabase, ref, set, push, get } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ReactCropper from 'react-easy-crop';
-import { useCallback } from 'react';
 
 const AddProductModal = ({ open, onClose }) => {
   const [form] = Form.useForm();
@@ -38,28 +37,28 @@ const AddProductModal = ({ open, onClose }) => {
     const file = info.fileList[0];
     const isValidType = ['image/jpeg', 'image/png'].includes(file.type);
     const isValidSize = file.size / 1024 / 1024 < 5; // Max 5MB
-  
+
     if (!isValidType) {
       message.error('Invalid file type! Please upload JPEG or PNG.');
       return;
     }
-  
+
     if (!isValidSize) {
       message.error('File size exceeds 5MB!');
       return;
     }
-  
+
     if (file && file.originFileObj) {
       setImageFile(file.originFileObj); 
       setCropperOpen(true);  // Open the cropper once an image is selected
     }
-  };  
+  };
 
   const getCroppedImage = useCallback(() => {
     if (!imageFile) return null;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
+
     const image = new Image();
     image.src = URL.createObjectURL(imageFile);
     image.onload = () => {
@@ -97,27 +96,27 @@ const AddProductModal = ({ open, onClose }) => {
   const handleSubmit = async (values) => {
     const { name, description, category, variations, price } = values;
     const db = getDatabase();
-  
+
     // Get current product count from the database
     const productCountRef = ref(db, 'productCount');
     const snapshot = await get(productCountRef);
-  
+
     // Increment product count
     let productCount = 1;
     if (snapshot.exists()) {
       productCount = snapshot.val() + 1;  // Increment the current product count
     }
-  
+
     // Set the new product count in the database
     await set(productCountRef, productCount); // Save the incremented productCount
-  
+
     const newProductId = `Product${productCount}`; // Generate new product ID based on incremented productCount
-  
+
     if (!croppedImageUrl) {
       message.error('Failed to upload image');
       return;
     }
-  
+
     try {
       // Prepare the base product data structure
       const productData = {
@@ -127,7 +126,7 @@ const AddProductModal = ({ open, onClose }) => {
         imageURL: croppedImageUrl,
         stockStatus: 'In Stock', // Set default stock status
       };
-  
+
       if (productType === 'pastry') {
         // For pastries, we only have a single price in variations
         productData.Variations = {
@@ -138,26 +137,26 @@ const AddProductModal = ({ open, onClose }) => {
         const formattedVariations = {
           temperature: {} // Structure to hold variations by temperature
         };
-  
+
         // Process each variation provided by the user
         variations.forEach((variation) => {
           const { temperature, size, price } = variation;
-  
+
           // If this temperature hasn't been added, initialize it
           if (!formattedVariations.temperature[temperature]) {
             formattedVariations.temperature[temperature] = {}; // Create temperature level (hot/iced)
           }
-  
+
           // Assign price for a specific size under the respective temperature
           formattedVariations.temperature[temperature][size] = Number(price); // Ensure price is a number
         });
-  
+
         productData.Variations = formattedVariations;
       }
-  
+
       // Set the product data in Firebase with the correct ID
       await set(ref(db, `products/${newProductId}`), productData);
-  
+
       message.success('Product added successfully');
       form.resetFields();
       setImageFile(null);
@@ -167,7 +166,7 @@ const AddProductModal = ({ open, onClose }) => {
       console.error("Error adding product:", error);
       message.error('Failed to add product');
     }
-  };  
+  };
 
   const filteredCategories = productType === 'pastry'
     ? categories.filter(category => category.Name === 'Pastry')
@@ -225,43 +224,54 @@ const AddProductModal = ({ open, onClose }) => {
                     <Form.Item
                       name={[name, 'temperature']}
                       fieldKey={[fieldKey, 'temperature']}
-                      rules={[{ required: true, message: 'Select temperature' }]}>
+                      rules={[{ required: true, message: 'Select temperature' }]} >
                       <Select placeholder="Temperature">
                         <Select.Option value="hot">Hot</Select.Option>
                         <Select.Option value="iced">Iced</Select.Option>
                       </Select>
                     </Form.Item>
+
                     <Form.Item
                       name={[name, 'size']}
                       fieldKey={[fieldKey, 'size']}
-                      rules={[{ required: true, message: 'Enter size' }]}>
+                      rules={[{ required: true, message: 'Enter size' }]} >
                       <Input placeholder="Size" />
                     </Form.Item>
+
                     <Form.Item
                       name={[name, 'price']}
                       fieldKey={[fieldKey, 'price']}
-                      rules={[{ required: true, message: 'Enter price' }]}>
-                      <Input type="number" placeholder="Price" />
+                      rules={[{ required: true, message: 'Enter price' }]} >
+                      <Input placeholder="Price" type="number" />
                     </Form.Item>
-                    <Button onClick={() => remove(name)}>Remove</Button>
+
+                    <Button danger onClick={() => remove(name)} icon={<PlusOutlined />} />
                   </div>
                 ))}
-                <Button type="dashed" onClick={() => add()} block>
-                  <PlusOutlined /> Add Variation
+                <Button type="dashed" icon={<PlusOutlined />} onClick={() => add()} className='w-full mb-4'>
+                  Add Variation
                 </Button>
               </>
             )}
           </Form.List>
-        ) : (
-          <Form.Item label="Price" name="price" rules={[{ required: true, message: 'Enter price' }]}>
+        ) : null}
+
+        {productType === 'pastry' && (
+          <Form.Item
+            label="Price"
+            name="price"
+            rules={[{ required: true, message: 'Please enter price' }]}
+          >
             <Input type="number" placeholder="Enter price" />
           </Form.Item>
         )}
 
-        <Form.Item label="Product Image" name="image" valuePropName="file">
+        <Form.Item label="Product Image" name="image">
           <Upload
-            onChange={handleImageChange}
+            accept="image/*"
+            showUploadList={false}
             beforeUpload={(file) => false}
+            onChange={handleImageChange}
             listType="picture-card"
             maxCount={1}
           >
