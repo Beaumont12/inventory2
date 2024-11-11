@@ -335,7 +335,7 @@ const External = () => {
 
     return (
         <div className='flex-1 bg-white overflow-auto h-full'>
-        <div className="p-7">
+        <div className="m-7">
         {renderAlert()}
             <h1 className="text-6xl text-center mt-2 font-bold text-black">External Inventory</h1>
             <h3 className="text-lg md:text-base bg-main-green rounded-lg text-white mb-4 text-center mt-4 md:mt-8 font-semibold">ENJOY BROWSING</h3>

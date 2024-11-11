@@ -20,10 +20,10 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Card = ({ icon, bgColor, title, value }) => {
   const backgroundClasses = {
-    blue: 'bg-emerald-400',
-    purple: 'bg-teal-400',
-    yellow: 'bg-cyan-400',
-    red: 'bg-sky-400',
+    blue: 'bg-emerald-900',
+    purple: 'bg-teal-900',
+    yellow: 'bg-cyan-900',
+    red: 'bg-sky-900',
   };
 
   return (
@@ -31,8 +31,8 @@ const Card = ({ icon, bgColor, title, value }) => {
       <div className="rounded-full w-20 h-20 flex items-center justify-center mb-4">
         {icon}
       </div>
-      <h2 className="text-lg font-semibold mb-2">{title}</h2>
-      <p className="text-3xl font-bold">{value}</p>
+      <h2 className="text-lg text-white font-semibold mb-2">{title}</h2>
+      <p className="text-3xl text-white font-bold">{value}</p>
     </div>
   );
 };
@@ -225,7 +225,7 @@ const Home = () => {
   
   return (
     <div className="flex-1 bg-white">
-      <div className="p-7">
+      <div className="m-7">
         <div className='border border-gray-100 p-4 rounded-lg bg-gray-100 flex items-center justify-between shadow-md'>
           <div className='md:mb-4 h-auto'>
             <h2 className="text-xs font-semibold mb-3">Dashboard Panel</h2>
@@ -265,7 +265,7 @@ const Home = () => {
             icon={<i className="material-icons text-white shadow-xl rounded-lg p-1 text-7xl">monetization_on</i>} 
             bgColor="red"
             title="Total Sales"
-            value={<span className="text-md">{totalSales.toFixed(2)}</span>}
+            value={<span className="text-md">&#8369;{totalSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
           />
         </div>
         <div className=" flex justify-center bg-gray-100 p-2 mt-10 rounded shadow-md border border-gray-100">

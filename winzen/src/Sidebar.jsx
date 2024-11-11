@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BsArrowLeftShort, BsBox2Fill, BsSearch, BsChevronDown, BsCartCheckFill, BsCartFill, BsCartPlusFill } from "react-icons/bs";
+import { BsArrowLeftShort, BsBox2Fill, BsSearch, BsChevronDown, BsCartCheckFill, BsCartPlusFill } from "react-icons/bs";
+import { TbShoppingCartCog, TbServerCog, TbUserCog, TbHistory, } from "react-icons/tb";
 import { GiThreeLeaves } from "react-icons/gi";
 import { RiDashboardFill } from "react-icons/ri";
-import { BiSolidCategory } from "react-icons/bi";
 import { IoMdAnalytics } from "react-icons/io";
 import { FaHistory, FaUsers, FaUserPlus } from "react-icons/fa";
 import { AiOutlineLogout } from "react-icons/ai";
-import { MdAddBox } from "react-icons/md";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Loader from 'react-js-loader';
 import Orders from './components/Orders';
@@ -22,7 +21,6 @@ import Utensils from './components/inventory/Utensils';
 import Inventory from './components/inventory/Inventory';
 import Manageuser from './components/Manageuser';
 import Adduser from './components/Adduser';
-import App from './App';
 import External from './components/inventory/External';
 
 const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
@@ -62,10 +60,8 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
     const Menus = [
         { title: "Dashboard", path: "/home", icon: <RiDashboardFill />, roles: ["Admin", "Super Admin"] },
         { title: "Manage Orders", path: "/orders", icon: <BsCartCheckFill />, roles: ["Admin", "Super Admin"] },
-        { title: "Manage Categories", path: "/manage-categories", icon: <BiSolidCategory />, roles: ["Admin", "Super Admin"] },
-        { title: "Add Categories", path: "/add-categories", icon: <MdAddBox />, roles: ["Admin", "Super Admin"] },
-        { title: "Manage Products", path: "/manage-products", icon: <BsCartFill />, roles: ["Admin", "Super Admin"] },
-        { title: "Add Products", path: "/add-products", icon: <BsCartPlusFill />, roles: ["Admin", "Super Admin"] },
+        { title: "Manage Products", path: "/manage-products", icon: <TbShoppingCartCog />, roles: ["Admin", "Super Admin"] },
+        { title: "Manage Categories", path: "/manage-categories", icon: <TbServerCog />, roles: ["Admin", "Super Admin"] },
         {
             title: "Stocks",
             spacing: true,
@@ -78,9 +74,9 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
                 { title: "External", path: "/submenu3", roles: ["Admin", "Super Admin"] },
             ], roles: ["Admin", "Super Admin"]
         },
-        { title: "Transactions", path: "/transactions", spacing: true, icon: <FaHistory />, roles: ["Admin", "Super Admin"] },
+        { title: "Transactions", path: "/transactions", spacing: true, icon: <TbHistory />, roles: ["Admin", "Super Admin"] },
         { title: "Sales Report", path: "/sales-report", icon: <IoMdAnalytics />, roles: ["Admin", "Super Admin"] },
-        { title: "Manage Users", path: "/manage-users", spacing: true, icon: <FaUsers />, roles: ["Super Admin"] },
+        { title: "Manage Users", path: "/manage-users", spacing: true, icon: <TbUserCog />, roles: ["Super Admin"] },
         { title: "Add Users", path: "/add-users", icon: <FaUserPlus />, roles: ["Super Admin"] },
         { title: "Logout", path: "/", spacing: true, icon: <AiOutlineLogout />, onClick: handleLogout, roles: ["Admin", "Super Admin"] },
     ];
