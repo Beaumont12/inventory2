@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { ref, get } from 'firebase/database';
 import { db } from '../../firebaseConfig';
-import { FaSearch, FaUser, FaUserTie, FaFire, FaSnowflake, FaClipboard } from 'react-icons/fa';
+import { FaSearch, FaClipboard, FaFire, FaSnowflake, FaUser, FaUserTie } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import moment from 'moment'; 
+import { Table, Button, Modal, Card } from 'antd';  // Import Ant Design components
 
 const History = () => {
   const [historyData, setHistoryData] = useState([]);
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,6 +29,7 @@ const History = () => {
             totalQuantity: Object.values(data[key].orderItems).reduce((acc, item) => acc + item.quantity, 0),
             orderDate: new Date(data[key].orderDateTime).toDateString(),
             staffName: data[key].staffName,
+            orderDateTime: data[key].orderDateTime,  // Include the actual timestamp
           }));
           setHistoryData(historyArray);
         } else {
@@ -38,7 +44,9 @@ const History = () => {
 
   const handleHistoryClick = (id) => {
     const selected = historyData.find((item) => item.id === id);
-    setSelectedHistory(selected);
+    if (selected) {
+      setSelectedHistory(selected); // Set the selected history to state
+    }
   };
 
   const closeModal = () => {
@@ -53,11 +61,12 @@ const History = () => {
     setSelectedMonth(e.target.value);
   };
 
-  // Filter history based on search query and month
-  const filteredHistoryData = historyData.filter(history => 
-    (history.orderNumber.includes(searchQuery) || history.staffName.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (selectedMonth === '' || new Date(history.orderDateTime).toLocaleString('default', { month: 'short' }) === selectedMonth)
-  );
+  const filteredHistoryData = historyData
+    .filter(history => 
+      (history.orderNumber.includes(searchQuery) || history.staffName.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      (selectedMonth === '' || new Date(history.orderDateTime).toLocaleString('default', { month: 'short' }) === selectedMonth)
+    )
+    .sort((a, b) => moment(b.orderDateTime).diff(moment(a.orderDateTime)));  // Sort by orderDateTime in descending order
 
   const totalQuantity = filteredHistoryData.reduce((total, history) => total + history.totalQuantity, 0);
   const totalAmount = filteredHistoryData.reduce((total, history) => total + parseFloat(history.total), 0);
@@ -125,28 +134,165 @@ const History = () => {
     { value: 'Nov', label: 'November' },
     { value: 'Dec', label: 'December' },
   ];
-  
+
+  // Columns for Ant Design Table
+  const columns = [
+    {
+      title: 'Order #',
+      dataIndex: 'orderNumber',
+      key: 'orderNumber',
+      render: (text, record) => (
+        <a onClick={() => handleHistoryClick(record.id)}>{text}</a>
+      )
+    },
+    {
+      title: 'Staff Name',
+      dataIndex: 'staffName',
+      key: 'staffName',
+    },
+    {
+      title: 'Date',
+      dataIndex: 'orderDate',
+      key: 'orderDate',
+    },
+    {
+      title: 'Quantity',
+      dataIndex: 'totalQuantity',
+      key: 'totalQuantity',
+    },
+    {
+      title: 'Total',
+      dataIndex: 'total',
+      key: 'total',
+      render: (text) => {
+        const number = Number(text);
+        if (isNaN(number)) return '₱0.00'; // Fallback if the value is invalid
+        return `₱${number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+    }
+  ];
+
   return (
     <div>
-      {selectedHistory && (
-        <div className="fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-50 overflow-y-auto">
-          <div className="bg-white p-8 rounded-lg z-50 flex justify-center items-center w-1/3 h-auto">
-            <div className="mt-2 items-center justify-center flex w-full">
-              <div
-                key={selectedHistory.id}
-                className="rounded-lg shadow-lg bg-white border border-gray-100 p-4 mb-4 relative w-full"
-                style={{ maxHeight: "80vh", overflowY: "auto", paddingTop: "3rem" }}
+      <div className="p-7 bg-white">
+        <h1 className="text-6xl text-center mt-2 font-bold">Transaction History</h1>
+        <h3 className="text-lg md:text-base text-center md:mt-8 font-semibold bg-main-green text-white rounded-lg">PLEASE MAKE SURE TO DOUBLE CHECK</h3>
+        <div className="mt-8">
+          <div className="flex justify-between">
+            <div className="relative w-full mr-2">
+              <FaSearch className="absolute left-3 top-1/3 transform -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search history by Order# and Staff name"
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                className="appearance-none block w-full bg-white text-gray-700 border shadow-md border-gray-200 rounded-lg py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
+              />
+            </div>
+            <select
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              className="appearance-none bg-main-green text-white text-center font-bold border border-gray-200 rounded-lg py-3 px-2 leading-tight focus:outline-none focus:bg-white focus:text-main-green focus:border-gray-500 mb-4"
+            >
+              {months.map((month) => (
+                <option key={month.value} value={month.value}>{month.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-between items-center my-4 font-extrabold mt-2">
+            <div className="w-1/3">
+              <Card
+                bordered={false}
+                className="shadow-lg text-white bg-main-green rounded-lg"
+                title={<span style={{ color: 'white' }}>Total Quantity</span>} 
               >
-                <button
-                  className="absolute top-2 right-2 text-white items-center mb-3 hover:text-gray-700 bg-red-600 px-2 rounded-lg"
-                  onClick={closeModal}
+                <p className="text-xl">
+                  {totalQuantity.toLocaleString()}
+                </p>
+              </Card>
+            </div>
+
+            <div className="w-1/3">
+              <Card
+                bordered={false}
+                className="shadow-lg text-white bg-main-green rounded-lg"
+                title={<span style={{ color: 'white' }}>Total Amount</span>} 
+              >
+                <p className="text-xl">
+                  ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </Card>
+            </div>
+
+            <div className="w-1/5">
+              <Card
+                bordered={false}
+                className="shadow-lg text-white bg-main-green rounded-lg"
+                title={<span style={{ color: 'white' }}>Export</span>}
+              >
+                <Button
+                  className="text-white bg-main-honey hover:bg-dark-honey rounded-lg font-bold"
+                  onClick={handleExportToExcel}
+                  style={{ width: '100%' }}
                 >
-                  Close
-                </button>
-                <h3 className="text-lg md:text-2xl font-semibold mb-4 text-center bg-main-honey text-white">
-                  Order Slip
-                </h3>
-                <div className="flex justify-between mb-4">
+                  Export to Excel
+                </Button>
+              </Card>
+            </div>
+          </div>
+
+          <Table
+            columns={columns}
+            dataSource={filteredHistoryData}
+            style={{
+              borderColor: '#203B36', // main honey color for the border
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderRadius: '8px',
+              margin: 0,
+          }}
+            rowKey="id"
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
+            }}
+            components={{
+              header: {
+              cell: ({ children, ...restProps }) => (
+                  <th
+                  {...restProps}
+                  style={{
+                      backgroundColor: '#203B36', // main honey color
+                      color: '#ffffff',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      padding: '8px',
+                      borderBottom: '1px solid #ffffff',
+                  }}
+                  >
+                  {children}
+                  </th>
+              ),
+              },
+          }}
+          />
+        </div>
+
+        {selectedHistory && (
+        <Modal
+          visible={!!selectedHistory}
+          onCancel={closeModal}
+          footer={null}
+          width={800}
+          title={
+            <div className="text-center text-3xl font-bold text-main-green">
+              Order Slip
+            </div>
+          }
+        >
+          <div className="flex justify-between mb-4">
                   <p className="text-sm md:text-sm font-medium border-b border-black pb-1 text-green-700">
                     Order# <span className="text-green-700 font-bold">{selectedHistory.orderNumber}</span>
                   </p>
@@ -233,75 +379,8 @@ const History = () => {
                     {selectedHistory.preference}
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
-
-      <div className="p-7 bg-white">
-        <h1 className="text-6xl text-center mt-2 font-bold">Transaction History</h1>
-        <h3 className="text-lg md:text-base text-center mt-4 md:mt-8 font-semibold bg-main-green text-white">PLEASE MAKE SURE TO DOUBLE CHECK</h3>
-        <div className="mt-8">
-          <div className="flex justify-between">
-            <div className="relative mb-4 w-full mr-2 ">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search products by name"
-                value={searchQuery}
-                onChange={handleSearchInputChange}
-                className="appearance-none block w-full bg-white text-gray-700 border shadow-md border-gray-200 rounded-lg py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"
-              />
-            </div>
-            <select
-              value={selectedMonth}
-              onChange={handleMonthChange}
-              className="appearance-none bg-main-honey text-light-green text-center font-bold border border-gray-200 rounded-lg py-3 px-2 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-4"
-            >
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>{month.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="bg-main-green rounded-lg p-4 shadow-lg mt-4">
-            <h2 className="text-xl font-bold mb-2 text-white">Total Transactions</h2>
-            <p className='text-white'>Total Quantity: {totalQuantity}</p>
-            <p className='text-white'>Total Amount: &#8369;{totalAmount.toFixed(2)}</p>
-            <button 
-              onClick={handleExportToExcel} 
-              className="mt-4 bg-light-green text-white py-2 px-4 rounded-lg hover:bg-green-600"
-            >
-              Export to Excel
-            </button>
-          </div>
-          <div className="flex justify-between items-center p-4 my-4 bg-main-honey text-white rounded-lg shadow-md font-extrabold mt-4">
-            <span className="text-lg w-1/5 text-center">Order #</span>
-            <span className="text-lg w-1/5 text-center">Staff Name</span>
-            <span className="text-lg w-1/5 text-center">Date</span>
-            <span className="text-lg w-1/5 text-center">Quantity</span>
-            <span className="text-lg w-1/5 text-center">Total</span>
-          </div>
-          <ul>
-            {filteredHistoryData.length === 0 ? (
-              <li className="text-center text-gray-500 p-4">
-                No transaction history available.
-              </li>
-            ) : (
-              filteredHistoryData.slice().reverse().map((history) => (
-                <li key={history.id} className="cursor-pointer" onClick={() => handleHistoryClick(history.id)}>
-                  <div className="flex justify-between items-center p-4 my-2 bg-white rounded-lg shadow-md">
-                    <span className="text-lg font-semibold w-1/5 text-center text-gray-600">{history.orderNumber}</span>
-                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.staffName}</span>
-                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.orderDate}</span>
-                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">{history.totalQuantity}</span>
-                    <span className="text-lg w-1/5 text-center font-semibold text-gray-600">&#8369;{history.total}</span>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
       </div>
     </div>
   );

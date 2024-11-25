@@ -22,6 +22,7 @@ const External = () => {
     const [newIngredientStocks, setNewIngredientStocks] = useState('');
     const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [updateIngredient, setUpdateIngredient] = useState({ name: '', stocks: 0 });
+    const [sortOption, setSortOption] = useState('id-asc');
 
     useEffect(() => {
         const ingredientsRef = ref(db, 'stocks/Ingredients');
@@ -48,16 +49,39 @@ const External = () => {
         return () => unsubscribe(); 
     }, []);
 
-    useEffect(() => {
-        if (activeCategory) {
-        const items = Object.entries(ingredients[activeCategory] || {}).filter(([key, ingredient]) => {
-            return ingredient.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                key?.toLowerCase().includes(searchQuery.toLowerCase());
+    const sortIngredients = (ingredientsArray, sortOption) => {
+        return ingredientsArray.sort(([keyA, ingredientA], [keyB, ingredientB]) => {
+          switch (sortOption) {
+            case 'id-asc':
+              return keyA.localeCompare(keyB);
+            case 'id-desc':
+              return keyB.localeCompare(keyA);
+            case 'name-asc':
+              return ingredientA.name.localeCompare(ingredientB.name);
+            case 'name-desc':
+              return ingredientB.name.localeCompare(ingredientA.name);
+            default:
+              return 0;
+          }
         });
-        setFilteredIngredients(items);
-        }
-    }, [activeCategory, searchQuery, ingredients]);
+      };
+      
 
+      useEffect(() => {
+        if (activeCategory) {
+          const items = Object.entries(ingredients[activeCategory] || {}).filter(([key, ingredient]) => {
+            return (
+              ingredient.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              key?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+          });
+      
+          // Apply sorting to the filtered items
+          const sortedItems = sortIngredients(items, sortOption);
+          setFilteredIngredients(sortedItems);
+        }
+      }, [activeCategory, searchQuery, ingredients, sortOption]);
+      
     const openAddModal = () => {
         setShowAddModal(true);
     };
@@ -340,11 +364,32 @@ const External = () => {
             <h1 className="text-6xl text-center mt-2 font-bold text-black">External Inventory</h1>
             <h3 className="text-lg md:text-base bg-main-green rounded-lg text-white mb-4 text-center mt-4 md:mt-8 font-semibold">ENJOY BROWSING</h3>
             {/* Search Input */}
-            <div className="relative mb-4">
-            <input type="text" placeholder="Search by ID or Name..." className="border rounded-lg p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-            <div className="absolute left-3 top-3 text-gray-400">
+            <div className="flex justify-between items-center mb-4">
+            {/* Search Input */}
+            <div className="relative w-4/5">
+                <input
+                type="text"
+                placeholder="Search by ID or Name..."
+                className="border rounded-lg p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <div className="absolute left-3 top-3 text-gray-400">
                 <FaSearch />
+                </div>
             </div>
+            
+            {/* Sorting Dropdown */}
+            <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="border rounded-lg p-2 shadow-md focus:outline-none focus:ring-1 focus:ring-main-honey w-56"
+            >
+                <option value="id-asc">Sort by ID (Ascending)</option>
+                <option value="id-desc">Sort by ID (Descending)</option>
+                <option value="name-asc">Sort by Name (Ascending)</option>
+                <option value="name-desc">Sort by Name (Descending)</option>
+            </select>
             </div>
             {/* Category Toggle Buttons */}
             <div className="flex justify-center space-x-4 mb-4">

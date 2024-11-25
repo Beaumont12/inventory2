@@ -284,28 +284,43 @@ const Inventory = () => {
       <h2 className="text-2xl font-bold mb-5 text-main-green">Stocks Dashboard</h2>
 
       <Row gutter={16}>
-        <Col span={6}>
-          <Card title="Total Products" bordered={false} className="shadow-lg bg-emerald-400 rounded-lg">
-            <div className="text-3xl font-semibold">{stockSummary.totalProducts}</div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card title="Total Stock" bordered={false} className="shadow-lg bg-teal-400 rounded-lg">
-            <div className="text-3xl font-semibold">{stockSummary.totalStock}</div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card title="Low Stock Items" bordered={false} className="shadow-lg bg-cyan-400 rounded-lg">
-            <div className="text-3xl font-semibold">{stockSummary.lowStockItems}</div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card title="Out of Stock Items" bordered={false} className="shadow-lg bg-sky-400 rounded-lg">
-            <div className="text-3xl font-semibold">{stockSummary.outOfStockItems}</div>
-          </Card>
-        </Col>
-      </Row>
-
+      <Col span={6}>
+        <Card 
+          title={<span style={{ color: 'white' }}>Total Products</span>} 
+          bordered={false} 
+          className="shadow-lg text-white bg-emerald-900 rounded-lg"
+        >
+          <div className="text-3xl text-white font-semibold">{stockSummary.totalProducts}</div>
+        </Card>
+      </Col>
+      <Col span={6}>
+        <Card 
+          title={<span style={{ color: 'white' }}>Total Stock</span>} 
+          bordered={false} 
+          className="shadow-lg text-white bg-teal-900 rounded-lg"
+        >
+          <div className="text-3xl text-white font-semibold">{stockSummary.totalStock}</div>
+        </Card>
+      </Col>
+      <Col span={6}>
+        <Card 
+          title={<span style={{ color: 'white' }}>Low Stock Items</span>} 
+          bordered={false} 
+          className="shadow-lg text-white bg-cyan-900 rounded-lg"
+        >
+          <div className="text-3xl text-white font-semibold">{stockSummary.lowStockItems}</div>
+        </Card>
+      </Col>
+      <Col span={6}>
+        <Card 
+          title={<span style={{ color: 'white' }}>Out of Stock Items</span>} 
+          bordered={false} 
+          className="shadow-lg text-white bg-sky-900 rounded-lg"
+        >
+          <div className="text-3xl text-white font-semibold">{stockSummary.outOfStockItems}</div>
+        </Card>
+      </Col>
+    </Row>
       {/* Filters Section */}
       <div className="mt-4 flex gap-x-4">
         <Select

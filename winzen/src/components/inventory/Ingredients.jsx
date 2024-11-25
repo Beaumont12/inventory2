@@ -17,6 +17,7 @@ const Ingredients = () => {
   const [newIngredientName, setNewIngredientName] = useState('');
   const [newIngredientStocks, setNewIngredientStocks] = useState('');
   const [curveCount, setCurveCount] = useState('');
+  const [sortOption, setSortOption] = useState('id-asc');
 
   useEffect(() => {
     const ingredientsRef = ref(db, 'stocks/Ingredients/Curve');
@@ -36,6 +37,30 @@ const Ingredients = () => {
       unsubscribe(); 
     };
   }, []);
+
+  const sortIngredients = (ingredientsArray) => {
+    return ingredientsArray.sort(([keyA, ingredientA], [keyB, ingredientB]) => {
+      switch (sortOption) {
+        case 'id-asc':
+          return keyA.localeCompare(keyB);
+        case 'id-desc':
+          return keyB.localeCompare(keyA);
+        case 'name-asc':
+          return ingredientA.name.localeCompare(ingredientB.name);
+        case 'name-desc':
+          return ingredientB.name.localeCompare(ingredientA.name);
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const filteredIngredients = sortIngredients(
+    Object.entries(ingredients).filter(([key, ingredient]) =>
+      key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ingredient.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
   const getStockStatus = (stock) => {
     if (stock === 0) {
@@ -124,11 +149,6 @@ const Ingredients = () => {
         }
     }
   };  
-
-  const filteredIngredients = Object.entries(ingredients).filter(([key, ingredient]) =>
-    key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ingredient.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const openUpdateModal = (ingredient) => {
     setSelectedIngredient({ id: ingredient.id, name: ingredient.name, stocks: ingredient.stocks });
@@ -276,9 +296,32 @@ const Ingredients = () => {
         {renderAlert()}
         <h1 className="text-6xl text-center mt-2 font-bold text-black">Ingredients Inventory</h1>
         <h3 className="text-lg md:text-base bg-main-green rounded-lg text-white mb-4 text-center mt-4 md:mt-8 font-semibold">ENJOY BROWSING</h3>
-        <div className="relative mb-4">
-          <input type="text" placeholder="Search by ID or Name..." className="border rounded-lg p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          <div className="absolute left-3 top-3 text-gray-400"> <FaSearch /> </div>
+        <div className="flex justify-between items-center mb-4">
+          {/* Search Input */}
+          <div className="relative w-4/5">
+            <input
+              type="text"
+              placeholder="Search by ID or Name..."
+              className="border rounded-lg p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className="absolute left-3 top-3 text-gray-400">
+              <FaSearch />
+            </div>
+          </div>
+          
+          {/* Sorting Dropdown */}
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+            className="border rounded-lg p-2 shadow-md focus:outline-none focus:ring-1 focus:ring-main-honey w-56"
+          >
+            <option value="id-asc">Sort by ID (Ascending)</option>
+            <option value="id-desc">Sort by ID (Descending)</option>
+            <option value="name-asc">Sort by Name (Ascending)</option>
+            <option value="name-desc">Sort by Name (Descending)</option>
+          </select>
         </div>
         <table className="min-w-full bg-main-honey border border-gray-200 shadow-md mt-8 rounded-lg overflow-hidden">
           <thead>

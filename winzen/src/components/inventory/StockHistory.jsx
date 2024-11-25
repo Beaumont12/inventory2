@@ -94,12 +94,34 @@ const StockHistory = () => {
 
   const handleExportToExcel = () => {
     console.log('Exporting to Excel with filtered data:', filteredData);
-    const ws = XLSX.utils.json_to_sheet(filteredData);
+  
+    // Calculate totals for each action
+    const summary = filteredData.reduce(
+      (acc, item) => {
+        acc[item.action] = (acc[item.action] || 0) + item.quantity;
+        return acc;
+      },
+      {}
+    );
+  
+    // Prepare summary rows
+    const summaryRows = Object.keys(summary).map((action) => ({
+      date: 'TOTAL',
+      product: '',
+      action,
+      quantity: summary[action],
+    }));
+  
+    // Combine summary with the main data
+    const exportData = [...summaryRows, ...filteredData];
+  
+    // Export to Excel
+    const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'StockHistory');
     XLSX.writeFile(wb, `StockHistory_${moment().format('YYYYMMDD')}.xlsx`);
   };
-
+  
   const columns = [
     {
       title: 'Date',
@@ -146,7 +168,7 @@ const StockHistory = () => {
             handleDynamicFilter(newFilters); // Dynamic filter applied here
           }}
           style={{ width: '800px', borderRadius:'8px' }}
-          className="shadow-lg"
+          className="shadow-lg focus:border-main-honey"
         />
         <Select
           placeholder="Select Action"

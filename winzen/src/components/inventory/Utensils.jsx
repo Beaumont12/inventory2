@@ -29,6 +29,7 @@ const Utensils = () => {
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [updateMode, setUpdateMode] = useState(false); // New state for update mode
   const [productType, setProductType] = useState('New Product');
+  const [sortOption, setSortOption] = useState('id-asc');
 
   useEffect(() => {
     const db = getDatabase(app);
@@ -54,10 +55,29 @@ const Utensils = () => {
     if (quantity < 40) return <span className="text-yellow-600 font-bold">Low Stock</span>;
     return <span className="text-green-600 font-bold">In Stock</span>;
   };
-
-  const filteredUtensils = utensils.filter((utensil) =>
-    utensil.name && utensil.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );  
+  
+  const filteredUtensils = utensils
+  .filter(
+    (utensil) =>
+      utensil.id.toLowerCase() !== 'utilcount' && // Exclude utilCount
+      utensil.name.toLowerCase() !== 'utilcount' && // Exclude utilCount
+      (utensil.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        utensil.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
+  .sort((a, b) => {
+    switch (sortOption) {
+      case 'id-asc':
+        return a.id.localeCompare(b.id);
+      case 'id-desc':
+        return b.id.localeCompare(a.id);
+      case 'name-asc':
+        return a.name.localeCompare(b.name);
+      case 'name-desc':
+        return b.name.localeCompare(a.name);
+      default:
+        return 0;
+    }
+  });
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -262,17 +282,32 @@ const Utensils = () => {
         <h3 className="text-lg md:text-base bg-main-green rounded-lg text-white mb-4 text-center mt-4 md:mt-8 font-semibold">
           ENJOY BROWSING
         </h3>
-        <div className="relative mb-4">
-          <input
-            type="text"
-            placeholder="Search by Name..."
-            className="border rounded-md p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <div className="absolute left-3 top-3 text-gray-400">
-            <FaSearch />
+        <div className="flex justify-between items-center mb-4">
+          {/* Search Input */}
+          <div className="relative w-4/5">
+            <input
+              type="text"
+              placeholder="Search by ID or Name..."
+              className="border rounded-lg p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-main-honey shadow-md"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className="absolute left-3 top-3 text-gray-400">
+              <FaSearch />
+            </div>
           </div>
+          
+          {/* Sorting Dropdown */}
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+            className="border rounded-lg p-2 shadow-md focus:outline-none focus:ring-1 focus:ring-main-honey w-56"
+          >
+            <option value="id-asc">Sort by ID (Ascending)</option>
+            <option value="id-desc">Sort by ID (Descending)</option>
+            <option value="name-asc">Sort by Name (Ascending)</option>
+            <option value="name-desc">Sort by Name (Descending)</option>
+          </select>
         </div>
         <table className="min-w-full bg-[#DDB04B] border border-gray-200 shadow-md mt-8 rounded-lg overflow-hidden">
           <thead>
