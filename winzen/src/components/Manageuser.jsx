@@ -160,9 +160,9 @@ const Manageuser = () => {
           {/* Search bar */}
           <div className="relative mb-4 mt-4">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-          <input type="text" placeholder="Search user by name" value={searchQuery} onChange={(e)=> setSearchQuery(e.target.value)} className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded-lg shadow-md py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"/>
+          <input type="text" placeholder="Search User by Name" value={searchQuery} onChange={(e)=> setSearchQuery(e.target.value)} className="appearance-none block w-full bg-white text-gray-700 border border-gray-200 rounded-lg shadow-md py-3 px-10 leading-tight focus:outline-none focus:bg-white focus:border-honey"/>
         </div>
-          <div className="grid grid-cols-1 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 border border-gray-100 rounded-lg shadow-md bg-gray-100">
+          <div className="grid grid-cols-1 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
             {loading ? (
               <p className='text-center text-red-600'>Loading...</p>
             ) : (

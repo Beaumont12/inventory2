@@ -1,48 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { IoAnalytics } from "react-icons/io5";
 import { Bar } from 'react-chartjs-2';
+import { Card, DatePicker, Select } from 'antd';
+import { db } from '../../firebaseConfig'; // Assuming db is already initialized
 import { ref, get } from 'firebase/database';
-import logo from '../assets/images/logo.png';
-import Calendar from 'react-calendar'; 
-import 'react-calendar/dist/Calendar.css'; 
-import { db, app } from '../../firebaseConfig'
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import dayjs from 'dayjs'; // Importing dayjs for date manipulation
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const months = ['Overall', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const months = [
+  'Overall', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 
+  'August', 'September', 'October', 'November', 'December'
+];
 
 const Overallsale = () => {
-  const [chartData, setChartData] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState(months[0]);
-  const [selectedWeek, setSelectedWeek] = useState('Overall');
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [error, setError] = useState(null);
-  const [calendarActive, setCalendarActive] = useState(false);
-  const [totalSalesForWeek, setTotalSalesForWeek] = useState(0); 
-  const [totalQuantitySold, setTotalQuantitySold] = useState(0); 
+  const [chartData, setChartData] = useState(null); // Start with null
+  const [selectedMonth, setSelectedMonth] = useState('Overall');
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedStaff, setSelectedStaff] = useState('All'); // State for selected staff filter
+  const [totalSalesForMonth, setTotalSalesForMonth] = useState(0);
+  const [totalQuantitySold, setTotalQuantitySold] = useState(0);
   const [totalCustomers, setTotalCustomers] = useState(0);
-  const [firstDayOfWeek, setFirstDayOfWeek] = useState(null);
-  const [lastDayOfWeek, setLastDayOfWeek] = useState(null);
-  const [totalWeeksInMonth, setTotalWeeksInMonth] = useState(0); 
+  const [staffData, setStaffData] = useState({});
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchData();
-  }, [selectedMonth, selectedWeek, selectedDate, calendarActive]);
-
-  useEffect(() => {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const weeksInMonth = calculateWeeksInMonth(year, month);
-    setTotalWeeksInMonth(weeksInMonth);
-  }, [selectedDate]);
+  }, [selectedMonth, selectedDate, selectedStaff]); // Add selectedStaff to dependency array
 
   const fetchData = async () => {
     try {
@@ -51,115 +35,90 @@ const Overallsale = () => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         let filteredData = Object.values(data);
-  
-        if (!calendarActive) {
-          if (selectedMonth !== 'Overall') {
-            filteredData = filteredData.filter(item => {
-              const orderDate = new Date(item.orderDateTime);
-              return months[orderDate.getMonth() + 1] === selectedMonth;
-            });
-          }
-          if (selectedWeek !== 'Overall') {
-            const selectedYear = selectedDate.getFullYear();
-            const monthIndex = months.indexOf(selectedMonth) - 1;
-            const selectedWeekNumber = parseInt(selectedWeek) - 1;
-            
-            const firstDayOfMonth = new Date(selectedYear, monthIndex, 1);
-            
-            let firstDayOfWeek = new Date(firstDayOfMonth);
-            firstDayOfWeek.setDate(firstDayOfMonth.getDate() + (selectedWeekNumber * 7)); 
-            firstDayOfWeek.setHours(0, 0, 0, 0); 
-            setFirstDayOfWeek(firstDayOfWeek)
-            let lastDayOfWeek = new Date(firstDayOfWeek);
-            lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
-            lastDayOfWeek.setHours(23, 59, 59, 999);
-            setLastDayOfWeek(lastDayOfWeek)
-            if (lastDayOfWeek.getMonth() !== monthIndex) {
-                lastDayOfWeek = new Date(selectedYear, monthIndex + 1, 0);
-                setLastDayOfWeek(lastDayOfWeek)
-            }
 
-            console.log('Start date of week:', firstDayOfWeek);
-            console.log('End date of week:', lastDayOfWeek);
-        
-            console.log("Filtered data before filtering:", filteredData);
-        
-            filteredData = filteredData.filter(item => {
-                const orderDate = new Date(item.orderDateTime);
-                const isInWeekRange = orderDate >= firstDayOfWeek && orderDate <= lastDayOfWeek;
-                console.log("Order date:", orderDate.toDateString());
-                console.log("Is in week range?", isInWeekRange);
-                return isInWeekRange;
-            });
-        
-            console.log("Filtered data after filtering:", filteredData);
-        }
-             
-        } else {
-          const selectedYear = selectedDate.getFullYear();
-          const selectedMonth = selectedDate.getMonth();
-          const selectedDay = selectedDate.getDate();
+        // Log the selected date range for debugging
+        console.log('Selected Date:', selectedDate);
+
+        // Filter data based on selectedMonth and selectedDate
+        if (selectedMonth !== 'Overall') {
           filteredData = filteredData.filter(item => {
             const orderDate = new Date(item.orderDateTime);
-            return (
-              orderDate.getFullYear() === selectedYear &&
-              orderDate.getMonth() === selectedMonth &&
-              orderDate.getDate() === selectedDay
-            );
-          });          
+            return orderDate.getMonth() + 1 === months.indexOf(selectedMonth);
+          });
         }
-        
-        console.log('Filtered data:', filteredData);
-  
-        const staffData = {};
-  
-        filteredData.forEach((item) => {
-          const { staffName, orderItems, total, customerName, orderDateTime } = item;
+
+        if (selectedDate) {
+          const [startDate, endDate] = selectedDate;
+          const start = startDate.toDate();
+          const end = endDate.toDate();
+          console.log('Filtering by Date Range:', start, end);
+
+          filteredData = filteredData.filter(item => {
+            const orderDate = new Date(item.orderDateTime);
+            return orderDate >= start && orderDate <= end;
+          });
+        }
+
+        // Filter data based on selected staff
+        if (selectedStaff !== 'All') {
+          filteredData = filteredData.filter(item => item.staffName === selectedStaff);
+        }
+
+        // Log filtered data for debugging
+        console.log('Filtered Data:', filteredData);
+
+        let salesForMonth = 0;
+        let quantitySold = 0;
+        let customersCount = new Set(); // Using a Set to store unique customers
+        let staffData = {};
+
+        filteredData.forEach(item => {
+          const { staffName, orderItems, total, customerName } = item;
+
+          // Initialize staff data if not already present
           if (!staffData[staffName]) {
             staffData[staffName] = { totalSales: 0, totalQuantity: 0, totalCustomers: 0, customers: [] };
           }
+
+          // Update staff's individual data
           staffData[staffName].totalSales += parseFloat(total);
-          Object.values(orderItems).forEach((order) => {
+          Object.values(orderItems).forEach(order => {
             staffData[staffName].totalQuantity += order.quantity;
           });
           if (customerName && !staffData[staffName].customers.includes(customerName)) {
             staffData[staffName].totalCustomers++;
             staffData[staffName].customers.push(customerName);
           }
-        });
-        const overallTotalSales = Object.values(staffData).reduce((acc, curr) => acc + curr.totalSales, 0);
-        const overallTotalQuantity = Object.values(staffData).reduce((acc, curr) => acc + curr.totalQuantity, 0);
-        const overallTotalCustomers = Object.values(staffData).reduce((acc, curr) => acc + curr.totalCustomers, 0);
 
-        setTotalSalesForWeek(overallTotalSales);
-        setTotalQuantitySold(overallTotalQuantity);
-        setTotalCustomers(overallTotalCustomers);
-  
+          // Aggregating the total sales for the month, total quantity sold, and customers count
+          salesForMonth += parseFloat(total);
+          Object.values(orderItems).forEach(order => {
+            quantitySold += order.quantity;
+          });
+          if (customerName) {
+            customersCount.add(customerName); // Add unique customers to the set
+          }
+        });
+
+        setStaffData(staffData);
+        setTotalSalesForMonth(salesForMonth);
+        setTotalQuantitySold(quantitySold);
+        setTotalCustomers(customersCount.size); // Use the size of the Set for unique customers
+
         const labels = Object.keys(staffData);
-        const dataset1Data = labels.map(date => staffData[date].totalSales);
-        const dataset2Data = labels.map(date => staffData[date].totalQuantity);
-        const dataset3Data = labels.map(date => staffData[date].totalCustomers);
-  
+        const dataset1Data = labels.map(staff => staffData[staff].totalSales);
+        const dataset2Data = labels.map(staff => staffData[staff].totalQuantity);
+        const dataset3Data = labels.map(staff => staffData[staff].totalCustomers);
+
         setChartData({
           labels: labels,
           datasets: [
-            {
-              label: 'Total Sales',
-              data: dataset1Data,
-              backgroundColor: 'rgba(255, 99, 132, 0.5)',
-            },
-            {
-              label: 'Quantity Sold',
-              data: dataset2Data,
-              backgroundColor: 'rgba(53, 162, 235, 0.5)',
-            },
-            {
-              label: 'Number of Customers',
-              data: dataset3Data,
-              backgroundColor: 'rgba(75, 192, 192, 0.5)',
-            },
+            { label: 'Total Sales', data: dataset1Data, backgroundColor: 'rgba(255, 99, 132, 0.5)' },
+            { label: 'Quantity Sold', data: dataset2Data, backgroundColor: 'rgba(53, 162, 235, 0.5)' },
+            { label: 'Number of Customers', data: dataset3Data, backgroundColor: 'rgba(75, 192, 192, 0.5)' },
           ],
         });
+
         setError(null);
       } else {
         setError('No data available');
@@ -167,146 +126,119 @@ const Overallsale = () => {
     } catch (error) {
       setError(error.message);
     }
-  };  
-
-  const calculateWeeksInMonth = (year, month) => {
-    const firstDayOfMonth = new Date(year, month, 1);
-    const firstDayOfWeek = firstDayOfMonth.getDay(); 
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysLeftInFirstWeek = 7 - (firstDayOfWeek === 0 ? 7 : firstDayOfWeek); 
-    const remainingDays = daysInMonth - daysLeftInFirstWeek; 
-    const fullWeeks = Math.ceil(remainingDays / 7); 
-    return fullWeeks + 1; 
-};
-
-
-  const handleMonthChange = (e) => {
-    setSelectedMonth(e.target.value);
-    setSelectedWeek('Overall');
-    setCalendarActive(false); 
   };
 
-  const handleWeekChange = (e) => {
-    setSelectedWeek(e.target.value);
-    setCalendarActive(false); 
+  const handleMonthChange = (value) => {
+    setSelectedMonth(value);
   };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    setCalendarActive(true); 
+  const handleDateChange = (dates) => {
+    setSelectedDate(dates);
   };
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-      title: { display: true, text: 'Sales Overview' },
-    },
+  const handleStaffChange = (value) => {
+    setSelectedStaff(value);
   };
+
+  // Helper function to format numbers with commas
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat().format(num);
+  };
+
+  // Fallback check before rendering chart
+  if (!chartData) {
+    return <div>Loading...</div>; // You can customize the loading indicator
+  }
 
   return (
     <div className="flex-1 bg-white">
       <div className="p-7">
         <h1 className="text-6xl text-center mt-2 font-bold text-black">Sales Report</h1>
-        <h3 className="text-lg md:text-base bg-main-green text-white mb-6 text-center mt-4 md:mt-8 font-semibold">
+        <h3 className="text-lg md:text-base bg-main-green text-white mb-6 text-center mt-4 md:mt-8 font-semibold rounded-lg">
           ENJOY BROWSING
         </h3>
-        <div className="flex justify-center mb-4 bg-main-green p-2 w-fit mx-auto rounded-lg">
+
+        <div className="flex justify-center mb-4 bg-main-green p-2 w-fit mx-auto rounded-lg shadow-lg">
           <label htmlFor="months" className="mr-2 mt-2 text-white font-bold">MONTH: </label>
-          <select
+          <Select
             value={selectedMonth}
             onChange={handleMonthChange}
-            className="p-2 border border-gray-100 shadow-md rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {months.map((month, index) => (
-              <option key={index} value={month}>{month}</option>
-            ))}
-          </select>
-          {/* Add second dropdown for selecting week */}
-          <select
-            value={selectedWeek}
-            onChange={handleWeekChange}
-            className="ml-2 p-2 border border-gray-100 shadow-md rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Overall">Overall</option>
-            {/* Dynamically generate week options */}
-            {selectedMonth !== 'Overall' && [...Array(totalWeeksInMonth)].map((_, index) => (
-              <option key={index} value={index + 1}>{`Week ${index + 1}`}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex justify-center mb-4">
-          <Calendar
-            onChange={handleDateChange}
-            value={selectedDate}
+            style={{ width: 120, marginRight: 2 }}
+            options={months.map(month => ({ label: month, value: month }))}
           />
-        </div>
-        {error ? (
-          <p>Error: {error}</p>
-        ) : (
-          <div className="relative border border-gray-100 rounded-lg shadow-lg">
-            <img src={logo} alt="Background" className="absolute inset-0 mx-auto my-auto w-40% h-40% object-cover" />
-            <div className="relative bg-white bg-opacity-85 p-4 rounded-lg shadow">
-              {chartData && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-4">Total Sales</h2>
 
-                  <h3 className="text-mb mb-2">Start Date: {firstDayOfWeek ? firstDayOfWeek.toString() : null}</h3>
-                  <h3 className="text-mb mb-4">End Date: {lastDayOfWeek ? lastDayOfWeek.toString() : null}</h3>
-                  <Bar options={options} data={{ ...chartData, datasets: [chartData.datasets[0]] }} />
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                    {chartData.labels.map((label, index) => (
-                      <div key={index} className="bg-light-green p-4 rounded-lg shadow">
-                        <h3 className="text-lg font-bold mb-2 text-white">{label}</h3>
-                        <p className='text-sm text-white'>Total Sales: &#8369;{chartData.datasets[0].data[index].toFixed(2)}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <div className="bg-[rgba(255,99,132,0.5)] p-4 rounded-lg shadow justify-between flex">
-                      <p className="text-lg font-bold">Total Sales for {selectedMonth} - {selectedWeek}:</p>
-                      <p className="text-lg font-semibold">&#8369;{totalSalesForWeek.toFixed(2)}</p>
+          <DatePicker.RangePicker
+            format="YYYY-MM-DD"
+            onChange={handleDateChange}
+          />
+
+          <label htmlFor="staff" className="mr-2 ml-2 mt-2 text-white font-bold">STAFF: </label>
+          <Select
+            value={selectedStaff}
+            onChange={handleStaffChange}
+            style={{ width: 120 }}
+          >
+            <Select.Option value="All">All</Select.Option>
+            {Object.keys(staffData).map(staff => (
+              <Select.Option key={staff} value={staff}>
+                {staff}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex flex-wrap justify-between mt-6 gap-8">
+          {error ? (
+            <p>{error}</p>
+          ) : (
+            <>
+              <div className="flex justify-between gap-4 w-full">
+                <Card title="Total Sales" bordered={false} style={{ width: '30%', borderRadius:'8px', backgroundColor:'rgba(255, 99, 132, 0.5)' }} className='shadow-lg'>
+                  <p>₱{formatNumber(totalSalesForMonth)}</p>
+                </Card>
+                <Card title="Quantity Sold" bordered={false} style={{ width: '30%', borderRadius:'8px', backgroundColor:'rgba(53, 162, 235, 0.5)' }} className='shadow-lg'>
+                  <p>{formatNumber(totalQuantitySold)}</p>
+                </Card>
+                <Card title="Customers" bordered={false} style={{ width: '30%', borderRadius:'8px', backgroundColor:'rgba(75, 192, 192, 0.5)' }} className='shadow-lg'>
+                  <p>{formatNumber(totalCustomers)}</p>
+                </Card>
+              </div>
+
+              <div className="w-full mt-2 shadow-lg p-4 rounded-lg">
+                <Bar data={chartData} style={{width: '100%'}} />
+              </div>
+
+              {/* Display cards for each staff member */}
+              <div className="flex flex-wrap gap-4 w-full">
+                {Object.keys(staffData).map(staffName => (
+                  <Card
+                    title={<span className="text-white">{staffName}</span>}  // Make title text white
+                    bordered={false}
+                    key={staffName}
+                    style={{ width: '30%', backgroundColor: '#203B36' }}
+                    className="rounded-lg shadow-lg text-white"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <p className="flex justify-between">
+                        <span>Total Sales:</span>
+                        <span>₱{formatNumber(staffData[staffName].totalSales)}</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span>Quantity Sold:</span>
+                        <span>{formatNumber(staffData[staffName].totalQuantity)}</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span>Number of Customers:</span>
+                        <span>{formatNumber(staffData[staffName].totalCustomers)}</span>
+                      </p>
                     </div>
-                  </div>
-                </div>
-              )}
-              {chartData && (
-                <div className="mt-8">
-                  <h2 className="text-2xl font-bold mb-4">Quantity Sold and Number of Customers</h2>
-                  <Bar options={options} data={{ ...chartData, datasets: [chartData.datasets[1], chartData.datasets[2]] }} />
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                    {chartData.labels.map((label, index) => (
-                      <div key={index} className="bg-light-green p-4 rounded-lg shadow-md">
-                        <h3 className="text-lg font-bold mb-2 text-white">{label}</h3>
-                        <div className='justify-between flex'>
-                          <p className='text-sm text-white'>Quantity Sold: </p>
-                          <p className='text-sm text-white'>{chartData.datasets[1].data[index]}</p>
-                        </div>
-                        <div className='justify-between flex'>
-                          <p className='text-sm text-white'>Number of Customers: </p>
-                          <p className='text-sm text-white'>{chartData.datasets[2].data[index]}</p>
-                        </div>
-                        
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <div className="bg-[rgba(53,162,235,0.5)] p-4 rounded-lg shadow justify-between flex">
-                      <p className="text-lg font-bold">Total Quantity Sold for {selectedMonth} - {selectedWeek}:</p>
-                      <p className="text-lg font-semibold">{totalQuantitySold}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <div className="bg-[rgba(75,192,192,0.5)] p-4 rounded-lg shadow justify-between flex">
-                      <p className="text-lg font-bold">Total Customers for {selectedMonth} - {selectedWeek}:</p>
-                      <p className="text-lg font-semibold">{totalCustomers}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+                  </Card>
+                ))}
+              </div>
+
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

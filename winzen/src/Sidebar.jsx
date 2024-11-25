@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BsArrowLeftShort, BsBox2Fill, BsSearch, BsChevronDown, BsCartCheckFill, BsCartPlusFill } from "react-icons/bs";
-import { TbShoppingCartCog, TbServerCog, TbUserCog, TbHistory, TbBox, TbClipboardList, TbToolsKitchen3, TbExternalLink,  } from "react-icons/tb";
+import { BsArrowLeftShort, BsSearch, BsChevronDown, } from "react-icons/bs";
+import { TbShoppingCartCog, TbServerCog, TbUserCog, TbHistory, TbBox, TbClipboardList, TbToolsKitchen3, TbExternalLink, TbChartInfographic, TbShoppingCartStar, TbLayoutDashboard } from "react-icons/tb";
 import { GiThreeLeaves } from "react-icons/gi";
 import { RiDashboardFill } from "react-icons/ri";
-import { IoMdAnalytics } from "react-icons/io";
-import { FaHistory, FaUsers, FaUserPlus } from "react-icons/fa";
+import { FaUserPlus } from "react-icons/fa";
 import { AiOutlineLogout } from "react-icons/ai";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Loader from 'react-js-loader';
@@ -59,8 +58,8 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
     };       
 
     const Menus = [
-        { title: "Dashboard", path: "/home", icon: <RiDashboardFill />, roles: ["Admin", "Super Admin"] },
-        { title: "Manage Orders", path: "/orders", icon: <BsCartCheckFill />, roles: ["Admin", "Super Admin"] },
+        { title: "Dashboard", path: "/home", icon: <TbLayoutDashboard />, roles: ["Admin", "Super Admin"] },
+        { title: "Manage Orders", path: "/orders", icon: <TbShoppingCartStar />, roles: ["Admin", "Super Admin"] },
         { title: "Manage Products", path: "/manage-products", icon: <TbShoppingCartCog />, roles: ["Admin", "Super Admin"] },
         { title: "Manage Categories", path: "/manage-categories", icon: <TbServerCog />, roles: ["Admin", "Super Admin"] },
         {
@@ -77,7 +76,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
             ], roles: ["Admin", "Super Admin"]
         },
         { title: "Transactions", path: "/transactions", spacing: true, icon: <TbHistory />, roles: ["Admin", "Super Admin"] },
-        { title: "Sales Report", path: "/sales-report", icon: <IoMdAnalytics />, roles: ["Admin", "Super Admin"] },
+        { title: "Sales Report", path: "/sales-report", icon: <TbChartInfographic />, roles: ["Admin", "Super Admin"] },
         { title: "Manage Users", path: "/manage-users", spacing: true, icon: <TbUserCog />, roles: ["Super Admin"] },
         { title: "Add Users", path: "/add-users", icon: <FaUserPlus />, roles: ["Super Admin"] },
         { title: "Logout", path: "/", spacing: true, icon: <AiOutlineLogout />, onClick: handleLogout, roles: ["Admin", "Super Admin"] },
