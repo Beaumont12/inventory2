@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BsArrowLeftShort, BsSearch, BsChevronDown, } from "react-icons/bs";
-import { TbShoppingCartCog, TbServerCog, TbUserCog, TbHistory, TbBox, TbClipboardList, TbToolsKitchen3, TbExternalLink, TbChartInfographic, TbShoppingCartStar, TbLayoutDashboard } from "react-icons/tb";
+import { TbUserPlus, TbShoppingCartCog, TbServerCog, TbUserCog, TbHistory, TbBox, TbClipboardList, TbToolsKitchen3, TbExternalLink, TbChartInfographic, TbShoppingCartStar, TbLayoutDashboard } from "react-icons/tb";
 import { GiThreeLeaves } from "react-icons/gi";
 import { RiDashboardFill } from "react-icons/ri";
 import { FaUserPlus } from "react-icons/fa";
@@ -78,7 +78,7 @@ const Sidebar = ({ isLoggedIn, setIsLoggedIn }) => {
         { title: "Transactions", path: "/transactions", spacing: true, icon: <TbHistory />, roles: ["Admin", "Super Admin"] },
         { title: "Sales Report", path: "/sales-report", icon: <TbChartInfographic />, roles: ["Admin", "Super Admin"] },
         { title: "Manage Users", path: "/manage-users", spacing: true, icon: <TbUserCog />, roles: ["Super Admin"] },
-        { title: "Add Users", path: "/add-users", icon: <FaUserPlus />, roles: ["Super Admin"] },
+        { title: "Add Users", path: "/add-users", icon: <TbUserPlus />, roles: ["Super Admin"] },
         { title: "Logout", path: "/", spacing: true, icon: <AiOutlineLogout />, onClick: handleLogout, roles: ["Admin", "Super Admin"] },
     ];
 
